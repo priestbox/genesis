@@ -1,0 +1,244 @@
+#!/bin/bash
+
+#	priest:	Hope that firewall works because your screwed
+
+#	Tested: Debian 10.7
+
+#	masscan --banners
+#	apt-get install ufw
+#	sudo cat /proc/sys/net/ipv4/ip_local_port_range
+#	32768	60999
+#	block single port below or above Linux reserved port range
+#	sudo ufw deny 61000
+#	sudo ufw enable
+#	sudo ufw status verbose
+
+#	Far from complete, though gets enough done quickly
+
+export DEBIAN_FRONTEND=noninteractive;
+
+echo "[*] Starting Install..."
+echo -e "\nRunning package upgrade\n"
+
+sudo apt-get update
+sudo apt-get -y upgrade
+
+echo -e	"[*] Done ... [*]\n\n"
+
+echo "[*] Installing OS tools and dependent libraries"
+
+sudo apt-get install -y ufw						# security & masscan firewall --source-port 61000
+sudo apt-get install -y jq whois dnsutils curl				# .bash_aliases
+sudo apt-get install -y python3-pip python3-setuptools			# pip3
+sudo apt-get install -y make build-essential git			# massdns, masscan
+sudo apt-get install -y gcc libpcap-dev					# massdns, masscan
+sudo apt-get install -y xsltproc					# xsltproc
+sudo apt-get install -y unzip						# amass etc...
+
+sudo apt-get install -y php php-common							# inurlbr etc...
+sudo apt-get install -y libcurl4 libcurl4-openssl-dev php7.3 php7.3.cli php7.3-curl	# inurlbr
+
+echo -e	"[*] Done ... [*]\n\n"
+
+if [ ! -f ~/.bashrc ]; then
+	echo	"[*] File ~/.bashrc not found!"
+	echo	"[*] Aborting installation..."
+	exit 1
+else
+	echo	"[*] Installing .bash_aliases"
+	git clone https://github.com/priestbox/genesis.git
+	cd genesis
+	cp bash_aliases ~/.bash_aliases
+	source ~/.bashrc							
+	cd ~/
+	echo -e "[*] Done ... [*]\n\n"
+fi
+
+#	Install go https://golang.org/dl/
+
+if [[ -z "$GOPATH" ]]; then
+	echo "[*] It looks like go is not installed; Would you like to install it now?"
+	PS3="[*] Enter your choice (must be a number): "
+	choices=("yes" "no")
+	select choice in "${choices[@]}"; do
+		case $choice in
+			yes)	
+				echo	"[*] Installing Golang"
+				wget https://dl.google.com/go/go1.15.6.linux-amd64.tar.gz
+				sudo tar -C /usr/local -xzf go1.15.6.linux-amd64.tar.gz				
+				export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
+				echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> ~/.bashrc
+				source ~/.bashrc				
+				rm go1.15.6.linux-amd64.tar.gz
+				echo -e	"[*] Done ... [*]\n\n"	
+				sleep 1
+				break
+				;;
+			no)
+				echo	"[*] Please install go and rerun this script"
+				echo	"[*] Aborting installation..."
+				exit 1
+				;;
+		esac	
+	done
+fi
+
+#	Create workspace filesystem
+
+echo "[*] Creating workspace structure"
+mkdir -p ~/workspace
+mkdir -p ~/workspace/data
+mkdir -p ~/workspace/rawdata
+mkdir -p ~/workspace/tools
+mkdir -p ~/workspace/wordlists
+
+echo -e	"[*] Done ... [*]\n\n"
+
+#	Setup ./initialize_target
+
+cp ~/genesis/initialize_target ~/workspace
+chmod +x ~/workspace/initialize_target
+
+#	Load up on tools
+
+cd ~/workspace/tools
+
+echo "[*] Installing nmap"
+sudo apt-get install -y nmap
+echo -e	"[*] Done ... [*]\n\n"
+
+echo "[*] Installing nmap vulners"
+sudo wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/vulners.nse -O /usr/share/nmap/scripts/vulners.nse
+sudo wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/http-vulners-paths.txt -O /usr/share/nmap/nselib/data/http-vulners-paths.txt
+sudo wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/http-vulners-regex.json -O /usr/share/nmap/nselib/data/http-vulners-regex.json
+sudo wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/http-vulners-regex.nse -O /usr/share/nmap/scripts/http-vulners-regex.nse
+sudo nmap --script-updatedb
+echo -e	"[*] Done ... [*]\n\n"
+
+echo "[*] Installing masscan"
+git clone https://github.com/robertdavidgraham/masscan
+cd masscan
+make
+sudo cp bin/masscan /usr/local/bin/masscan
+cd ~/workspace/tools
+echo -e	"[*] Done ... [*]\n\n"
+
+echo "[*] Installing amass"
+wget https://github.com/OWASP/Amass/releases/download/v3.10.5/amass_linux_amd64.zip
+unzip amass_linux_amd64.zip
+sudo cp amass_linux_amd64/amass /usr/local/bin/amass
+rm amass_linux_amd64.zip
+echo -e	"[*] Done ... [*]\n\n"
+
+echo "[*] Installing massdns"
+git clone https://github.com/blechschmidt/massdns
+cd massdns
+make
+sudo make install
+cd ~/workspace/tools
+echo -e	"[*] Done ... [*]\n\n"
+
+echo "[*] Installing httprobe"
+go get -u github.com/tomnomnom/httprobe
+echo -e	"[*] Done ... [*]\n\n"
+
+echo "[*] Installing unfurl"
+go get -u github.com/tomnomnom/unfurl
+echo -e	"[*] Done ... [*]\n\n"
+
+echo "[*] Installing waybackurls"
+go get -u github.com/tomnomnom/waybackurls
+echo -e	"[*] Done ... [*]\n\n"
+
+echo "[*] EyeWitness"
+git clone https://github.com/FortyNorthSecurity/EyeWitness
+cd EyeWitness/Python/setup
+sudo ./setup.sh
+cd ~/workspace/tools
+echo -e "[*] Done ... [*]\n\n"
+
+echo "[*] Installing Asnlookup"
+git clone https://github.com/yassineaboukir/Asnlookup
+cd Asnlookup
+pip3 install -r requirements.txt
+cd ~/workspace/tools
+echo -e	"[*] Done ... [*]\n\n"
+
+echo "[*] Installing dirsearch"
+git clone https://github.com/maurosoria/dirsearch
+echo -e	"[*] Done ... [*]\n\n"
+								
+echo "[*] Installing LinkFinder"
+git clone https://github.com/GerbenJavado/LinkFinder
+cd LinkFinder
+pip3 install -r requirements.txt			
+sudo python3 setup.py install
+cd ~/workspace/tools
+echo -e "[*] Done ... [*]\n\n"
+
+echo "[*] Installing Arjun"
+git clone https://github.com/s0md3v/Arjun
+echo -e "[*] Done ... [*]\n\n"
+
+echo "[*] Installing JSParser"
+git clone https://github.com/nahamsec/JSParser
+cd JSParser*
+sudo python setup.py install
+cd ~/workspace/tools
+echo -e "[*] Done ... [*]\n\n"
+
+echo "[*] Installing SQLMAP"
+sudo apt-get install -y sqlmap
+echo -e "[*] Done ... [*]\n\n"
+
+#	Minor Tangents
+
+echo "[*] Install INURLBR"
+sudo wget https://raw.githubusercontent.com/googleinurl/SCANNER-INURLBR/master/inurlbr.php -O /usr/local/bin/inurlbr.php
+sudo chmod +x /usr/local/bin/inurlbr.php
+echo -e "[*] Done ... [*]\n\n"
+
+echo "[*] Install lfiINURL"
+sudo wget https://raw.githubusercontent.com/googleinurl/lfiINURL/master/lfiINURL.php -O /usr/local/bin/lfiINURL.php
+sudo chmod +x /usr/local/bin/lfiINURL.php
+echo -e "[*] Done ... [*]\n\n"
+
+#	Load up on wordlists 
+
+cd ~/workspace/wordlists
+
+echo "[*] Installing fuzzdb"
+git clone https://github.com/fuzzdb-project/fuzzdb
+echo -e	"[*] Done ... [*]\n\n"
+
+echo "[*] Installing wfuzz"
+sudo apt-get install -y wfuzz
+ln -s /usr/share/wfuzz/wordlist/ wfuzzdb
+echo -e	"[*] Done ... [*]\n\n"
+
+echo "[*] Installing SecLists"
+# git clone https://github.com/danielmiessler/SecLists
+# This file breaks MASSDNS and needs to be trimmed
+# cd SecLists/Discovery/DNS
+# cat dns-Jhaddix.txt | head -n -14 > dns-Jhaddix-cleaned.txt
+# double check head output as cmd can fail.
+echo -e	"[*] Done ... [*]\n\n"
+
+cd ~/workspace
+
+#	Load up on exploitdb
+
+echo "[*] Installing ExploitDB"
+sudo git clone https://github.com/offensive-security/exploitdb /opt/exploitdb
+sed 's|path_array+=(.*)|path_array+=("/opt/exploitdb")|g' /opt/exploitdb/.searchsploit_rc > ~/.searchsploit_rc
+sudo ln -sf /opt/exploitdb/searchsploit /usr/local/bin/searchsploit
+echo -e	"[*] Done ... [*]\n\n"
+
+echo "[*] Cleanup / Disable"
+sudo systemctl disable apache2
+sudo systemctl stop apache2
+echo -e	"[*] Done ... [*]\n\n"
+
+echo -e "[*] Finished Setup Installation\n\n"
+
+

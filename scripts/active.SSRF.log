@@ -1,0 +1,4 @@
+[Potential SSRF VULN] http://testphp.vulnweb.com/search.php?test=evil.com
+[Potential SSRF VULN] http://testphp.vulnweb.com/?file=evil.com
+[Potential SSRF VULN] http://testphp.vulnweb.com/search.php?gt=evil.com&test=evil.com
+[Potential SSRF VULN] http://testphp.vulnweb.com/search.php?cat=evil.com&ppl=evil.com&test=evil.com

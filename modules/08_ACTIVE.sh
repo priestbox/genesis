@@ -182,7 +182,7 @@ else
 						-t 40 \
 						-rate 10 \
 						-p 2 \
-						-mr "burpcollaborator_link" \
+						-mr "collaborator_link" \
 						-od data-enumeration/ssrf-blind \
 						-of json \
 						-o data-enumeration/ssrf-blind.ffuf.json \

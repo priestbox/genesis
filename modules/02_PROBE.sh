@@ -1,14 +1,14 @@
 #/bin/bash
 
 #-------------------------------------------------------------------------------------------------------------------------------------------
-#		01_HTTPROBE.sh -- Detect live 80, 443 services
+#		01_PROBE.sh -- Detect live 80, 443 services
 #
 #		Tested: Debian 13 (trixie)
 #-------------------------------------------------------------------------------------------------------------------------------------------	
 
 #		HOST=$HOST # xargs placeholder
 
-		echo "[*]	Probing HOST.db to httpx.alive.db"
+		echo "[*]	Probing hosts.db to httpx.alive.db"
 
 #		cat hosts.db | xargs -I % sh -c 'sudo hping3 --count 1 --verbose --destport 80,443 --ack % | grep "0% packet loss" | echo % | tee -a httprobe.alive.db'
 #		cat hosts.db | httprobe -c 40 -p https:443 http:80 | anew 02.httprobe.alive.full.lst | unfurl -u domains | anew httprobe.alive.db

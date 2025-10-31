@@ -20,8 +20,5 @@
 
 		subfinder -d $HOST -t 35 -all -silent | sort | anew hosts.db		#	API KEYS REQUIRED	$HOME/.config/subfinder/provider-config.yaml
 
-		cat hosts.db | grep -E "admin|administrator|root|sysadmin|secure|api|gateway|auth|login|sso|dev|developer|test|stage|staging|uat|beta|demo|internal|intranet|vpn|portal|dashboard|manage|management|config|control|server|db|database|backup|files|static|cdn" | anew hosts.admin.db
-
-		cp hosts.db hosts.full.db
 		wc -l hosts.db
 #		echo -e "\n"

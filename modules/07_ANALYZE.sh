@@ -13,14 +13,11 @@
 		find $HOME/WORKZONE/data-active/$HOST/. -type d -print0 | xargs -0 sudo chown -R $USER:$USER
 
 ##		Use at own RISK, however helps when there is 10's of thousands of output files, mostly empty bloat to search through
-
 #		ls -lSrh $HOME/WORKZONE/data-active/$HOST/nmap-data/ 		# Sizing files, determines bloat file sizes
 #		ls -lSrh $HOME/WORKZONE/data-active/$HOST/nmap-data/ | wc -l	# Total count
 #		sleep 5
 #		find $HOME/WORKZONE/data-active/$HOST/nmap-data/. -type f -size -10k -exec rm -v {} \;	# Deletion of bloat files less than 10k (1024 B per k)
-
 #		rm -rf $HOME/WORKZONE/data-active/$HOST/split
-
 ##		EOF sub-routine
 
 #		echo -e "\n"

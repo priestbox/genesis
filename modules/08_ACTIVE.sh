@@ -210,7 +210,7 @@ else
 						-t 40 \
 						-rate 10 \
 						-p 2 \
-						-mr "compute.internal" \
+						-mr "keyword" \
 						-od data-enumeration/ssrf-redirect \
 						-of json \
 						-o data-enumeration/ssrf-redirect.ffuf.json \

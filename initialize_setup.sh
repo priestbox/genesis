@@ -1,8 +1,9 @@
 #!/bin/bash
+#
 #	neural.priest
 #
 #---------------------------------------------------------------------------------------------------------------------------------------
-#	.bash_genesis	--	priest:	Hope that firewall works because your screwed
+#	initialize_setup.sh	--	priest:	Hope that firewall works because your screwed
 #
 #	Tested: Debian 13 (trixie)
 #---------------------------------------------------------------------------------------------------------------------------------------

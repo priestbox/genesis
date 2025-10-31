@@ -168,10 +168,11 @@ else
 		SSRF-BLIND)
 
 			echo "SSRF-BLIND Redirect"
-
+			# echo $(dd if=<(tr -dc '[a-zA-Z0-9]' < /dev/urandom) bs=4 count=2 2>/dev/null)
+			rand=$(dd if=<(tr -dc '[a-zA-Z0-9]' < /dev/urandom) bs=4 count=2 2>/dev/null) # ; echo $rand
 			cat data-enumeration/urls/gau.alive.params.db | \
 				gf ssrf | \
-				qsreplace "$SSRF.collaborator_link" | \
+				qsreplace "$rand.collaborator_link" | \
 				anew | \
 				while read url ; \
 					do \
@@ -182,12 +183,12 @@ else
 						-t 40 \
 						-rate 10 \
 						-p 2 \
-						-mr "collaborator_link" \
+						-mr "$rand.collaborator_link" \
 						-od data-enumeration/ssrf-blind \
 						-of json \
 						-o data-enumeration/ssrf-blind.ffuf.json \
 				; done
-
+			echo -e "$rand\n" > data-enumeration/ssrf-blind/rand.db
 			sleep 1
 			break
 			;;

@@ -9,7 +9,7 @@ git clone https://github.com/priestbox/genesis.git
 ```
 **WARNING**
 ```bash
-$HOME/.bash_aliases
+$HOME/.bash_aliases ---> Modified
 ```
 **usage:**
 ```bash
@@ -30,7 +30,7 @@ cd $HOME/WORKZONE
 ```
 **output:**
 ```bash
-cd $HOME/WORKZONE/rawdata/$HOST/
+cd $HOME/WORKZONE/data-active/$HOST/
 ```
 
 --------------------------------------------------------

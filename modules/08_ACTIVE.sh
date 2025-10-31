@@ -335,7 +335,6 @@ else
 						-o data-enumeration/$HOST.directories.json \
 				; done
 
-#			mv *.directories.json data-enumeration/
 			jq -C ".results[] | select(.status=="200") | .url" data-enumeration/$HOST.directories.json | tr -d '"'
 
 			sleep 1

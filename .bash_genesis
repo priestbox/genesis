@@ -1,0 +1,97 @@
+#	neural.priest
+#
+#---------------------------------------------------------------------------------------------------------------------------------------
+#	.bash_genesis	--	priest:	Hope that firewall works because your screwed
+#
+#	Tested: Debian 13 (trixie)
+#---------------------------------------------------------------------------------------------------------------------------------------
+#
+# 	apt-get install jq dnsutils whois curl
+#
+# 	Insert following into .bashrc if required
+#
+# 	if [ -f ~/genesis/.bash_genesis ]; then
+# 	  . ~/genesis/.bash_genesis
+# 	fi
+#
+# 	source .bashrc
+#
+#---------------------------------------------------------------------------------------------------------------------------------------
+#	SOURCE settings	----------------------------------------------------------------------------------------------------------------
+
+export MODULES=$HOME/genesis/modules
+
+#---------------------------------------------------------------------------------------------------------------------------------------
+#	BASIC Sub-routines -------------------------------------------------------------------------------------------------------------
+#
+#	recon.host <target.com>
+
+recon.host()	{
+
+	if [ $# -lt 1 ] && [ -z "$HOST" ] ; then
+		echo "Usage: recon.host <target.com>"
+
+	elif [ ! -z $1 ] && [ -z $HOST ] ; then
+		export HOST=$1
+		if [ ! -z $1 ] && [ ! -z $HOST ] ; then
+			echo -e "Latest : $HOST"	
+		fi
+		echo -e "Exported : $HOST"
+
+	elif [ -z $1 ] && [ ! -z $HOST ] ; then
+		export HOST=$HOST
+		echo -e "Current: $HOST"
+
+	elif [ ! -z $1 ] && [ ! -z $HOST ] ; then
+		export HOST=$1
+		echo -e "Exported : $HOST"
+	fi
+}
+
+recon.ip2host()	{
+	
+	cd $HOME/WORKZONE/data-active/$HOST
+
+	cat massdns.alive.ips.db | \
+	while read value ; \
+		do \
+			key=$(host $value | cut -d " " -f 5 | grep '.com' | sed 's/com.$/com/') ; \
+			echo "$value $key" | \
+			grep '.com' ; \
+		done | \
+	anew data-enumeration/cloud/s3.IP2Host.db
+}
+
+recon.ip2info()	{ 	# user@debian:~$ ipinfo ?	<---- IP Public
+
+	if [ $# -lt 1 ]; then
+		echo "Usage: recon.ipinfo 192.168.0.1"
+	else
+		curl -s https://ipinfo.io/$1
+
+	fi
+}
+
+#---------------------------------------------------------------------------------------------------------------------------------------
+#	MODULE aliases -----------------------------------------------------------------------------------------------------------------
+
+alias 00_SETUP='"$MODULES/./00_SETUP.sh"; cd $HOME/WORKZONE/data-active/$HOST'
+alias 01_SUBDOMAINS='"$MODULES/./01_SUBDOMAINS.sh"'
+alias 02_PROBE='"$MODULES/./02_PROBE.sh"'
+alias 03_MASSDNS='"$MODULES/./03_MASSDNS.sh"'
+alias 04_MASSCAN='"$MODULES/./04_MASSCAN.sh"'
+alias 05_NMAP-SCAN='"$MODULES/./05_NMAP-SCAN.sh"'
+alias 06_EYEWITNESS='"$MODULES/./06_EYEWITNESS.sh"'
+alias 07_ANALYZE='echo $HOST | xargs sh -c "$MODULES/./07_ANALYZE.sh"'
+alias 08_ACTIVE='"$MODULES/./08_ACTIVE.sh"'
+
+#---------------------------------------------------------------------------------------------------------------------------------------
+#	TOOL ALIASES	----------------------------------------------------------------------------------------------------------------
+
+#	ln -s ~/genesis/modules/10_TEST.sh ~/.local/bin/10_TEST
+#
+#	alias TEST='echo $HOST | xargs sh -c "$MODULES/./10_TEST.sh %"'
+
+#---------------------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------------------------
+# EOF

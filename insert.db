@@ -1,4 +1,0 @@
-
-if [ -f ~/genesis/.bash_genesis ]; then
-  . ~/genesis/.bash_genesis
-fi

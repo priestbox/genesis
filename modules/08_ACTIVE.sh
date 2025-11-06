@@ -43,7 +43,7 @@ else
 		GAU)
 			echo "GAU && GREP Extraction  : -E 'www.' httpx.alive.db : Filtered servers only"
 
-
+			source ~/.venv/bin/activate
 			cat httpx.alive.www.db | gau | uro | anew data-enumeration/urls/gau.alive.db	# 'www.' servers only 
 
 			cat httpx.alive.db | grep -E "admin|administrator|root|sysadmin|secure|api|gateway|auth|login|sso|dev|developer|test|stage|staging|uat|beta|demo|internal|intranet|vpn|portal|dashboard|manage|management|config|control|server|db|database|backup|files|static|cdn" | anew data-enumeration/urls/httpx.alive.interesting-subdomains.db
@@ -61,6 +61,7 @@ else
 			grep -v '[[:upper:]]' data-enumeration/urls/gau.alive.params.full.db | anew data-enumeration/urls/gau.alive.params.db
 			grep robots.txt data-enumeration/urls/gau.alive.db | tee data-enumeration/urls/gau.alive.robots.txt.db
 
+			deactivate
 			sleep 1
 			break
 			;;

@@ -137,6 +137,7 @@ mkdir -p $HOME/WORKZONE/data-active
 mkdir -p $HOME/WORKZONE/data-raw
 mkdir -p $HOME/WORKZONE/tmp
 mkdir -p $HOME/WORKZONE/tools
+mkdir -p $HOME/WORKZONE/WORKSPACE
 # mkdir -p $HOME/WORKZONE/wordlists		#	/opt/
 
 #	Setup $HOME/initialize_target.sh $HOME/.gf/

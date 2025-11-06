@@ -57,7 +57,7 @@ else
 
 			cat data-enumeration/urls/gau.alive.db | grep ".js$" | uro | sort -u | tee data-enumeration/js/gau.alive.js.db
 			grep -Eo 'https?://[^"]+' data-enumeration/urls/gau.alive.db | grep -Eo '[^*]*/' | anew data-enumeration/urls/gau.alive.subdirectories.db
-			grep -v ".js?\|.js$" data-enumeration/urls/gau.alive.db | grep -E '\?.+=' | anew data-enumeration/urls/gau.alive.params.full.db
+			grep -v ".js?\|.js$" data-enumeration/urls/gau.alive.db | grep -E '\?[^=]+=.+$' | anew data-enumeration/urls/gau.alive.params.full.db
 			grep -v '[[:upper:]]' data-enumeration/urls/gau.alive.params.full.db | anew data-enumeration/urls/gau.alive.params.db
 			grep robots.txt data-enumeration/urls/gau.alive.db | tee data-enumeration/urls/gau.alive.robots.txt.db
 

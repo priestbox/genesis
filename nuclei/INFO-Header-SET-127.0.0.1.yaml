@@ -1,0 +1,53 @@
+id: INFO-Header-SET
+
+info:
+  name: INFO Header SET 127.0.0.1
+  author: priest
+  severity: info
+  description: Informational Header 127.0.0.1 Misconfiguration
+  tags: header
+
+requests:
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+      - "{{BaseURL}}/%2e/"
+      - "{{BaseURL}}:443"
+      - "{{BaseURL}}/redirect"
+
+    redirects: true
+    max-redirects: 5
+
+    headers:
+
+      Host: "{{Hostname}}"
+      X-Forwarded-For: "127.0.0.1"
+      X-Forwarded-Host: "127.0.0.1"
+
+    matchers-condition: and
+    matchers:
+
+      - name: X-Forwarded-For-header
+        type: regex
+        part: header
+        regex:
+          - "X-Forwarded-For:.*127.0.0.1"
+
+      - name: X-Forwarded-Host-header
+        type: regex
+        part: header
+        regex:
+          - "X-Forwarded-Host:.*127.0.0.1"
+
+      - type: regex
+        part: header
+        regex:
+          - ".*?127.0.0.1.*?"
+
+    extractors:
+      - type: regex
+        part: header
+        name: reflected-parse
+        group: 0
+        regex:
+          - ".*?127.0.0.1.*?[\r\n]"

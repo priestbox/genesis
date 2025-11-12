@@ -10,6 +10,7 @@ git clone https://github.com/priestbox/genesis.git
 **WARNING**
 ```bash
 $HOME/.bash_aliases ---> Modified
+Read the source,...
 ```
 **usage:**
 ```bash

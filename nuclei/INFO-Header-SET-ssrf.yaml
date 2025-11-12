@@ -1,0 +1,39 @@
+id: INFO-Header-SET-SSRF
+
+info:
+  name: INFO Header SET SSRF
+  author: priest
+  severity: info
+  description: Informational SSRF Header Misconfiguration
+  tags: header
+
+requests:
+  - payloads:
+      payload: ./helpers/payloads-shortened/ssrf-hosts.txt
+      header: ./helpers/payloads-shortened/proxy-headers.txt
+
+    redirects: true
+    max-redirects: 5
+    threads: 10
+
+    raw:
+
+      - |
+        GET / HTTP/1.1
+        Host: §payload§
+        User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0
+        Connection: close
+
+      - |
+        GET / HTTP/1.1
+        Host: {{Hostname}}
+        User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0
+        §header§ §payload§
+        Connection: close
+
+    attack: clusterbomb
+
+    matchers:
+    - type: status
+      status:
+        - 200

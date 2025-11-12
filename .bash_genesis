@@ -61,7 +61,7 @@ recon.ip2host()	{
 			echo "$value $key" | \
 			grep '.com' ; \
 		done | \
-	anew data-enumeration/cloud/s3.IP2Host.db
+	anew data-enumeration/cloud/massdns.alive.hostname.db
 }
 
 recon.ip2info()	{ 	# user@debian:~$ ipinfo ?	<---- IP Public

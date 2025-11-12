@@ -1,0 +1,31 @@
+id: INFO-Header-SET-xss
+
+info:
+  name: INFO Header SET xss
+  author: priest
+  severity: info
+  description: Informational XSS Header Misconfiguration
+  tags: header
+
+requests:
+  - payloads:
+      header: ./helpers/payloads/proxy-headers.txt
+      payload: ./helpers/payloads/xss.full.db
+
+    raw:
+      - |
+        GET / HTTP/1.1
+        Host: {{Hostname}}
+        User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0
+        §header§: §payload§
+        Connection: close
+
+
+    attack: pitchfork
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - ".*xss.db.*"

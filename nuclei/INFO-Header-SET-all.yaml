@@ -1,0 +1,89 @@
+id: INFO-Header-SET-ALL
+
+info:
+  name: INFO Header SET ALL
+  author: priest
+  severity: info
+  description: Informational Header Misconfiguration
+  tags: header
+
+requests:
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+#      - "{{BaseURL}}/%2e/"
+#      - "{{BaseURL}}:443"
+#      - "{{BaseURL}}/redirect"
+
+    redirects: true
+    max-redirects: 5
+
+    headers:
+
+      Host: "{{Hostname}}"
+      X-Forwarded-For: "{{randstr}}.neuralpriest.com"
+      X-Forwarded-Host: "{{randstr}}.neuralpriest.com"
+      X-Host: "{{randstr}}.neuralpriest.com"
+      X-Forwarded-Server: "{{randstr}}.neuralpriest.com"
+      Forwarded: "{{randstr}}.neuralpriest.com"
+      Referer: "{{randstr}}.neuralpriest.com"
+      Origin: "{{randstr}}.neuralpriest.com"
+
+    matchers-condition: or
+    matchers:
+
+      - name: Location-header
+        type: regex
+        part: header
+        regex:
+          - "Location:.*{{randstr}}.neuralpriest.com"
+
+      - name: X-Forwarded-For-header
+        type: regex
+        part: header
+        regex:
+          - "X-Forwarded-For:.*{{randstr}}.neuralpriest.com"
+
+      - name: X-Forwarded-Host-header
+        type: regex
+        part: header
+        regex:
+          - "X-Forwarded-Host:.*{{randstr}}.neuralpriest.com"
+
+      - name: X-Host-header
+        type: regex
+        part: header
+        regex:
+          - "X-Host:.*{{randstr}}.neuralpriest.com"
+
+      - name: X-Forwarded-Server-header
+        type: regex
+        part: header
+        regex:
+          - "X-Forwarded-Server:.*{{randstr}}.neuralpriest.com"
+
+      - name: Forwarded-header
+        type: regex
+        part: header
+        regex:
+          - "Forwarded:.*{{randstr}}.neuralpriest.com"
+
+      - name: Referer-header
+        type: regex
+        part: header
+        regex:
+          - "Referer:.*{{randstr}}.neuralpriest.com"
+
+      - name: Origin-header
+        type: regex
+        part: header
+        regex:
+          - "Origin:.*{{randstr}}.neuralpriest.com"
+          - "access-control-allow-credential:.*true"
+          - "content-security-policy:.*default-src.*'self'"
+
+    extractors:
+      - type: regex
+        part: header
+        regex:
+          - ".*?{{randstr}}.neuralpriest.com.*?[\r\n]"

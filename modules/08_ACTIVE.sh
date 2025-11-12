@@ -410,7 +410,8 @@ else
 #		select a subdomain or child directory to scan for attacks
 
 		DIRSEARCH-attacks)
-
+			
+			source ~/.venv/bin/activate
 			echo "DIRSEARCH-all_attacks.txt"
 
 			echo $URL | \
@@ -426,7 +427,7 @@ else
 						--full-url \
 						-o data-enumeration/dirsearch/all_attacks.db \
 				; done
-
+			deactivate
 			sleep 1
 			break
 			;;
@@ -437,7 +438,7 @@ else
 			
 			echo "arjun"
 			mkdir -p "data-enumeration/arjun"
-			arjun -i data-enumeration/urls/gau.alive.params.db -oJ data-enumeration/arjun/arjun.json -oT output.json -t 20 --rate-limit 20 --headers "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0" -w $HOME/WORKZONE/tools/Arjun/arjun/db/large.txt
+			arjun -i data-enumeration/urls/gau.alive.params.db -oJ data-enumeration/arjun/arjun.json -oT data-enumeration/arjun/arjun.txt.db -t 20 --rate-limit 20 --headers "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0" -w $HOME/WORKZONE/tools/Arjun/arjun/db/large.txt
 
 			#	$HOME/WORKLISTS/SecLists/Discovery/Web-Content/burp-parameter-names.txt
 

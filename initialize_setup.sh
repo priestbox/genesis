@@ -32,7 +32,6 @@ sudo apt-get update
 sudo apt-get -y upgrade
 
 echo -e	"[*] Done ... [*]\n\n"
-
 if [ ! -f $HOME/.bash_aliases ]; then
 	echo	"[*] File $HOME/.bash_aliases not found!"
 	: > $HOME/.bash_aliases
@@ -59,7 +58,7 @@ sudo apt-get install -y xsltproc libxml2 libxml2-dev		# xsltproc
 sudo apt-get install -y libxml2-utils unzip			# searchsploit --nmap -x <file.xml> && etc...
 
 sudo apt-get install -y php php-common							# inurlbr apache2 php
-sudo apt-get install -y libcurl4t64 libcurl4-openssl-dev php8.4 php8.4.cli php8.4-curl	# inurlbr etc...
+sudo apt-get install -y libcurl4t64 libcurl4-openssl-dev php8.4 php8.4-cli php8.4-curl	# inurlbr etc...
 sudo apt-get install -y hydra								# hydra
 
 echo -e	"[*] Done ... [*]\n\n"
@@ -76,7 +75,7 @@ echo -e	"[*] Done ... [*]\n\n"
 echo "[*] Manifestation of Python3 enviroment $HOME/.venv"
 
 mkdir -p $HOME/.local/bin
-echo 'export PATH=$HOME/.local/bin:$PATH' >> $HOME/.bash_aliases
+# echo 'export PATH=$HOME/.local/bin:$PATH' >> $HOME/.bash_aliases
 source $HOME/.bash_aliases
 python3 -m venv $HOME/.venv
 source $HOME/.venv/bin/activate
@@ -101,8 +100,8 @@ select choice in "${choices[@]}"; do
                 yes)
 
 			echo "Installing Golang"
-			wget https://go.dev/dl/go1.25.0.linux-amd64.tar.gz
-			sudo tar -xvf go1.25.0.linux-amd64.tar.gz
+			wget https://go.dev/dl/go1.26.0.linux-amd64.tar.gz
+			sudo tar -xvf go1.26.0.linux-amd64.tar.gz
 			sudo mv go /usr/local
 			export GOROOT=/usr/local/go
 			export GOPATH=$HOME/go
@@ -131,14 +130,13 @@ echo -e	"[*] Done ... [*]\n\n"
 
 echo "[*] Creating WORKZONE structure"
 mkdir -p $HOME/.gf/
+mkdir -p $HOME/WORKSPACE/
 mkdir -p $HOME/WORKZONE/
 mkdir -p $HOME/WORKZONE/data
 mkdir -p $HOME/WORKZONE/data-active
 mkdir -p $HOME/WORKZONE/data-raw
 mkdir -p $HOME/WORKZONE/tmp
 mkdir -p $HOME/WORKZONE/tools
-mkdir -p $HOME/WORKZONE/WORKSPACE
-# mkdir -p $HOME/WORKZONE/wordlists		#	/opt/
 
 #	Setup $HOME/initialize_target.sh $HOME/.gf/
 
@@ -260,12 +258,11 @@ echo -e "[*] Done ... [*]\n\n"
 
 #	Load up on wordlists 
 
-# LISTS=$HOME/WORKZONE/wordlists
-# cd $LISTS
+LISTS=/opt
 
-# echo "[*] Installing SecLists"
-# cd $LISTS
-# git clone https://github.com/danielmiessler/SecLists
+echo "[*] Installing SecLists"
+cd $LISTS # art-deco
+sudo git clone https://github.com/danielmiessler/SecLists /opt/SecLists
 # This file breaks MASSDNS and needs to be trimmed
 # cd SecLists/Discovery/DNS
 # cat dns-Jhaddix.txt | head -n -14 > dns-Jhaddix-cleaned.txt
@@ -275,7 +272,7 @@ echo -e "[*] Done ... [*]\n\n"
 #	Load up on exploitdb
 
 echo "[*] Installing ExploitDB"
-# cd $LISTS # art-deco
+cd $LISTS # art-deco
 sudo git clone https://gitlab.com/exploit-database/exploitdb.git /opt/exploitdb
 sudo ln -sf /opt/exploitdb/searchsploit /usr/local/bin/searchsploit
 echo -e	"[*] Done ... [*]\n\n"
@@ -291,7 +288,7 @@ source $HOME/.bash_aliases
 
 cd $HOME
 mv google-chrome-stable_current_amd64.deb $HOME/WORKZONE/tmp
-mv go1.25.0.linux-amd64.tar.gz $HOME/WORKZONE/tmp
+mv go1.26.0.linux-amd64.tar.gz $HOME/WORKZONE/tmp
 sudo apt-get autoremove --purge
 
 echo -e "[*] Execute: sudo chown -R $USER:$USER $HOME/WORKZONE\n\n"

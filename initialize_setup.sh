@@ -67,7 +67,6 @@ echo "[*] Installing Google Chrome"
 
 wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb		# google-chrome-stable
 # dpkg -i ./google-chrome-stable_current_amd64.deb
-# mv google-chrome-stable_current_amd64.deb $HOME/Downloads
 # sudo apt-get remove --purge google-chrome-stable
 
 echo -e	"[*] Done ... [*]\n\n"
@@ -106,9 +105,9 @@ select choice in "${choices[@]}"; do
 			export GOROOT=/usr/local/go
 			export GOPATH=$HOME/go
 			export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
-			echo 'export GOROOT=/usr/local/go' >> $HOME/.bash_aliases
+			echo -e '\nexport GOROOT=/usr/local/go' >> $HOME/.bash_aliases
 			echo 'export GOPATH=$HOME/go' >> $HOME/.bash_aliases			
-			echo 'export PATH=$GOPATH/bin:$GOROOT/bin:$PATH' >> $HOME/.bash_aliases
+			echo -e 'export PATH=$GOPATH/bin:$GOROOT/bin:$PATH\n' >> $HOME/.bash_aliases
 			sleep 1
 			break
 			;;
@@ -130,7 +129,6 @@ echo -e	"[*] Done ... [*]\n\n"
 
 echo "[*] Creating WORKZONE structure"
 mkdir -p $HOME/.gf/
-mkdir -p $HOME/WORKSPACE/
 mkdir -p $HOME/WORKZONE/
 mkdir -p $HOME/WORKZONE/data
 mkdir -p $HOME/WORKZONE/data-active
@@ -150,8 +148,8 @@ echo -e	"[*] Done ... [*]\n\n"
 
 #	Load up on tools
 
-cd $HOME/WORKZONE/tools
 TOOLS=$HOME/WORKZONE/tools
+cd $TOOLS
 
 echo "[*] Installing nmap"
 sudo apt-get install -y nmap
@@ -213,8 +211,7 @@ go install github.com/ffuf/ffuf/v2@latest
 go install github.com/projectdiscovery/katana/cmd/katana@latest
 go install github.com/channyein1337/jsleak@latest
 
-
-echo 'source $GOPATH/pkg/mod/github.com/tomnomnom/gf@v0.0.0-20200618134122-dcd4c361f9f5/gf-completion.bash' >> $HOME/.bash_aliases	
+echo -e 'source $GOPATH/pkg/mod/github.com/tomnomnom/gf@v0.0.0-20200618134122-dcd4c361f9f5/gf-completion.bash\n' >> $HOME/.bash_aliases	
 
 echo -e	"[*] GO_LANG Binaries Done ... [*]\n\n"
 
@@ -282,7 +279,6 @@ sudo systemctl disable apache2
 sudo systemctl stop apache2
 echo -e	"[*] Done ... [*]\n\n"
 
-cd $HOME/WORKZONE
 deactivate
 source $HOME/.bash_aliases
 

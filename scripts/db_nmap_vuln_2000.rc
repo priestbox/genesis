@@ -1,0 +1,43 @@
+<ruby>
+# workspace_name = #{framework.db.workspace.name}
+# USE THIS SET SEQUENCES OF COMMANDS. Works...
+
+run_single("unsetg all")
+
+run_single("workspace -d default")		# default workspace
+
+run_single("workspace -a default")
+
+run_single("setg rhosts file://data/subdomains/HOSTS-alive-ip.db")
+
+run_single("db_import data/subdomains/HOSTS-alive-ip.db")
+
+nmap_full_opts = "-Pn -R --top-ports 2000 --open -sSV -O -vvv --host-timeout 55 -T4 --script=vuln --script=banner --script=http-headers"
+
+#masscan to input file
+
+home_dir = Dir.home
+directory_name = "#{home_dir}/.msf4_blacksites"				# default
+file_name = "#{directory_name}/data/subdomains/HOSTS-alive-ip.db"
+Dir.mkdir(directory_name) unless File.exists?(directory_name)
+output_file_xml = "#{directory_name}/msf-nmap-vuln-top-ports-2000-output.xml"
+output_file_html = "#{directory_name}/msf-nmap-vuln-top-ports-2000-output.html"
+
+
+if (framework.datastore['RHOSTS'] == nil)
+	print_line("You have to set RHOSTS globally ... exiting")
+	return
+end
+
+print_line("Starting db_nmap scanner")
+
+nmap_cmd ="sudo nmap -iL #{file_name} #{nmap_full_opts} -oX #{output_file_xml}"
+
+run = system nmap_cmd
+
+run_single("xsltproc #{output_file_xml} -o #{output_file_html}")
+
+run_single("cp #{output_file_xml} $HOME/BLACKSITES/$HOST/")
+run_single("cp #{output_file_html} $HOME/BLACKSITES/$HOST/")
+
+</ruby>

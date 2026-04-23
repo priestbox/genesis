@@ -1,0 +1,21 @@
+<ruby>
+
+home_dir = Dir.home
+directory_name = "#{home_dir}/.msf4_blacksites/#{framework.db.workspace.name}"		# default
+file_name = "#{directory_name}/targets.txt"
+Dir.mkdir(directory_name) unless File.exists?(directory_name)
+
+
+if File.exist?(file_name)
+  nmap_cmd ="sudo nmap -iL #{file_name} -Pn -n -sSV --script=vuln --top-ports 2000 -T4 --open -oX #{directory_name}/msf-nmap-vuln-top-ports-2000-output.xml"
+  print "\n\n"
+  print_status "Running nmap on #{file_name}/tcp"
+  print_status "#{nmap_cmd}"
+  run = system nmap_cmd
+  self.run_single("db_import #{directory_name}/msf-nmap-vuln-top-ports-2000-output.xml")
+else
+  print_error('!')
+  print_error("! A list of target IP Addressess was not found at #{file_name}")
+  print_error('!')
+end
+</ruby>

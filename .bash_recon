@@ -1,0 +1,101 @@
+#
+#
+#	neural.priest
+#
+#---------------------------------------------------------------------------------------------------------------------------------------
+#	.bash_recon	--	priest:	Hope that firewall works because your screwed
+#
+#	Tested: Debian 13 (trixie)
+#---------------------------------------------------------------------------------------------------------------------------------------
+#
+# 	apt-get install jq bind9-dnsutils whois curl
+#
+# 	Insert following into .bashrc if required
+#
+# 	if [ -f ~/.bash_recon ]; then
+# 	  . ~/.bash_recon
+# 	fi
+#
+# 	source ~/.bashrc
+#---------------------------------------------------------------------------------------------------------------------------------------
+#	BASIC Sub-routines -------------------------------------------------------------------------------------------------------------
+#
+#	recon.host <target.com>
+
+# --- Configuration ---
+
+# Colors for output
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly NC='\033[0m' # No Color
+
+# --- Paths ---
+
+readonly BLACKBOX="$HOME/BLACKBOX"
+readonly BLACKSITES="$HOME/BLACKSITES"
+readonly DEBIAN_FRONTEND=noninteractive
+
+# --- Helper Functions ---
+
+log_info() {
+    printf "${GREEN}[+] $1 ${NC}\n"
+}
+
+log_warn() {
+    printf "${YELLOW}[-] $1 ${NC}\n"
+}
+
+log_err() {
+    printf "${RED}[!] $1 ${NC}\n" >&2
+}
+
+alias bb='cd $BLACKBOX ; clear ; ls -la'
+alias bs='cd $BLACKSITES ; clear ; ls -la'
+alias bh='cd $BLACKSITES/$HOST ; clear ; ls -la'
+
+recon.host()	{
+
+	if [ $# -lt 1 ] && [ -z "${HOST}" ] ; then
+		log_warn "Usage: recon.host <target.com>"
+
+	elif [ ! -z $1 ] && [ -z $HOST ] ; then
+		export HOST=$1
+		if [ ! -z $1 ] && [ ! -z $HOST ] ; then
+			log_info "Latest : $HOST"
+		fi
+		log_info "Exported : $HOST"
+
+	elif [ -z $1 ] && [ ! -z $HOST ] ; then
+		export HOST=$HOST
+		log_info "Current: $HOST"
+
+	elif [ ! -z $1 ] && [ ! -z $HOST ] ; then
+		export HOST=$1
+		log_info "Exported : $HOST"
+	fi
+}
+
+recon.ip2host()	{
+	
+	cd $BLACKSITES/$HOST
+
+	cat data/subdomains/HOSTS-alive-ip.db | \
+	while read value ; \
+		do \
+			key=$(host $value | cut -d " " -f 5 | grep '.com' | sed 's/com.$/com/') ; \
+			echo "$value $key" | \
+			grep '.com' ; \
+		done | \
+	anew data/subdomains/HOSTSNAMES.db
+}
+
+recon.ip2info()	{ 	# user@debian:~$ ipinfo ?	<---- IP Public
+
+	if [ $# -lt 1 ]; then
+		log_warn "Usage: recon.ipinfo 192.168.0.1"
+	else
+		curl -s https://ipinfo.io/$1
+
+	fi
+}

@@ -1,0 +1,250 @@
+#!/usr/bin/env bash
+# -------------------------------------------------------------------------------------------
+#	masscan --banners
+#	apt-get install ufw
+#	sudo cat /proc/sys/net/ipv4/ip_local_port_range
+#	32768	60999
+#	block single port below or above Linux reserved port range
+#	sudo ufw reset
+#	sudo ufw deny 61000
+#	sudo ufw reload
+#	sudo ufw enable
+#	sudo ufw status verbose
+#
+#	recon.setup	--	priest:	Hope that firewall works because your screwed
+#
+#	Tested: Debian 13 (trixie)
+#
+#	Far from complete, though gets enough done quickly
+# -------------------------------------------------------------------------------------------
+#	Description: Automated installation of pentesting tools and dependencies.
+#
+#	Author: neural.priest
+# -------------------------------------------------------------------------------------------
+
+set -e
+
+# --- Configuration ---
+
+# Colors for output
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly NC='\033[0m' # No Color
+
+# --- Paths ---
+
+readonly BLACKBOX="$HOME/BLACKBOX"
+readonly BLACKSITES="$HOME/BLACKSITES"
+readonly GIT_DIR="/opt"
+readonly TMP_DIR="/tmp"
+readonly DEBIAN_FRONTEND=noninteractive
+
+# --- Go Version (Update this if needed) https://go.dev/dl/ ---
+
+readonly GO_VERSION="1.26.2"
+readonly GO_URL="https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz"
+
+# --- Helper Functions ---
+
+log_info() {
+    printf "${GREEN}[+]${NC} $1\n"
+}
+
+log_warn() {
+    printf "${YELLOW}[-]${NC} $1\n"
+}
+
+log_err() {
+    printf "${RED}[!]${NC} $1\n" >&2
+}
+
+log_info "Starting Install..."
+log_info "Installing system dependencies..."
+
+cd $HOME
+
+# --- Scripts, APT Packages, Upgrades && Dependencies ---
+
+sudo apt-get update
+sudo apt-get -y upgrade
+
+log_info "Done ..."
+
+if [ ! -f $HOME/.bash_aliases ]; then
+	log_err " File $HOME/.bash_aliases not found!"
+	: > $HOME/.bash_aliases
+	log_err "Aborting installation..."
+	exit 1
+fi
+
+log_info "Done ..."
+
+sudo apt-get install -y jq whois bind9-dnsutils curl            # script dependencies
+sudo apt-get install -y ufw gcc make build-essential git        # massdns, masscan
+sudo apt-get install -y python3-pip python3-venv                # eyewitness, metasploit
+sudo apt-get install -y xsltproc libxml2 libxml2-dev            # xsltproc
+sudo apt-get install -y libxml2-utils unzip                     # ...
+
+log_info "Done ..."
+
+# --- Install GO Binaries https://go.dev/dl/ ---
+
+if [[ -z "$GOPATH" ]];then
+log_info "It looks like go is not installed, would you like to install it now"
+PS3="Please select an option : "
+choices=("yes" "no")
+select choice in "${choices[@]}"; do
+        case $choice in
+                    yes)
+                        log_info "Installing Golang"
+                        wget $GO_URL
+                        tar -xvf go${GO_VERSION}.linux-amd64.tar.gz
+                        sudo mv go /usr/local
+                        export GOROOT=/usr/local/go
+                        export GOPATH=$HOME/go
+                        export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+                        echo -e '\nexport GOROOT=/usr/local/go' >> $HOME/.bash_aliases
+                        echo -e 'export GOPATH=$HOME/go' >> $HOME/.bash_aliases			
+                        echo -e 'export PATH=$GOPATH/bin:$GOROOT/bin:$PATH\n' >> $HOME/.bash_aliases
+                        rm ~/go${GO_VERSION}.linux-amd64.tar.gz
+                        sleep 1
+                        break
+                        ;;
+                     no)
+                        log_warn "Please install go and rerun this script"
+                        log_warn "Aborting installation..."
+                        exit 1
+                        ;;
+        esac
+done
+fi
+
+# source ~/.bash_aliases BROKEN
+
+# --- Creation of BLACKBOX filesystem ---
+
+log_info "Creating BLACKBOX structure"
+
+cd $HOME
+mkdir -p $BLACKBOX
+mkdir -p $BLACKSITES
+mkdir -p $HOME/.msf4_blacksites
+
+log_info "Done ..."
+
+# --- GO_LANG, $GIT_DIR Packages && Dependencies ---
+
+log_info "Installing GO_LANG Binaries"
+
+go install -v github.com/tomnomnom/anew@latest
+go install -v github.com/tomnomnom/unfurl@latest
+go install -v github.com/tomnomnom/httprobe@latest
+go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
+go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+
+log_info "GO_LANG Binaries Done ..."
+
+log_info "Installing nmap && hping3 && fping"
+sudo apt-get install -y nmap hping3 fping
+log_info "Done ..."
+
+log_info "Installing nmap vulners"
+sudo wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/vulners.nse -O /usr/share/nmap/scripts/vulners.nse
+sudo wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/http-vulners-paths.txt -O /usr/share/nmap/nselib/data/http-vulners-paths.txt
+sudo wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/http-vulners-regex.json -O /usr/share/nmap/nselib/data/http-vulners-regex.json
+sudo wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/http-vulners-regex.nse -O /usr/share/nmap/scripts/http-vulners-regex.nse
+sudo nmap --script-updatedb
+log_info "Done ..."
+
+log_info "Installing nmap vulscan"
+cd /usr/share/nmap/scripts/
+sudo git clone https://github.com/scipag/vulscan scipag_vulscan
+sudo ln -s `pwd`/scipag_vulscan /usr/share/nmap/scripts/vulscan
+cd scipag_vulscan/utilities/updater/
+sudo chmod +x updateFiles.sh
+# sudo ./updateFiles.sh
+sudo nmap --script-updatedb
+log_info "Done ..."
+
+log_info "Installing massdns"
+cd $GIT_DIR
+sudo git clone https://github.com/blechschmidt/massdns
+cd massdns
+sudo make
+sudo make install
+log_info "Done ..."
+
+log_info "Installing masscan"
+cd $GIT_DIR
+sudo git clone https://github.com/robertdavidgraham/masscan
+cd masscan
+sudo make
+sudo make install
+log_info "Done ..."
+
+log_info "Installing metasploit-framework"
+cd $TMP_DIR
+curl https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb > msfinstall && chmod 755 msfinstall && sudo ./msfinstall
+#	$ msfupdate
+#	$ msfdb init
+#	$ msfconsole
+#	$ db_status
+log_info "Done ..."
+
+log_info "Installing EyeWtness"
+cd $GIT_DIR
+sudo git clone https://github.com/FortyNorthSecurity/EyeWitness /opt/EyeWitness
+cd EyeWitness/setup
+sudo ./setup.sh
+# source /opt/EyeWitness/eyewitness-venv/bin/activate
+log_info "Done ..."
+
+log_info "Installing nikto"
+cd $GIT_DIR
+sudo git clone https://github.com/sullo/nikto.git /opt/nikto
+# cd nikto/program
+# sudo cpan
+# cpan[1]> install JSON
+# cpan[2]> install XML::Writer
+# ln -s /opt/nikto/program/nikto.pl $HOME/.local/bin/nikto
+# ./nikto.pl -Version
+# ./nikto.pl -h <target>
+log_info "Done ..."
+
+if [[ ! -d "/opt/SecLists" ]];then
+log_info "Install SecLists?, would you like to install it now"
+PS3="Please select an option : "
+choices=("yes" "no")
+select choice in "${choices[@]}"; do
+        case $choice in
+                yes)		
+			log_info "Installing SecLists"
+			cd $GIT_DIR
+			# sudo git clone https://github.com/danielmiessler/SecLists /opt/SecLists
+			# This file breaks MASSDNS and needs to be trimmed
+			# cd SecLists/Discovery/DNS
+			# cat dns-Jhaddix.txt | head -n -14 > dns-Jhaddix-cleaned.txt
+			# double check head output as cmd can fail.
+			log_info "Done ..."
+			break
+			;;
+		no)
+			break
+			;;
+	esac
+done
+fi
+
+log_info "Installing ExploitDB"
+cd $GIT_DIR
+sudo git clone https://gitlab.com/exploit-database/exploitdb.git /opt/exploitdb
+sudo ln -sf /opt/exploitdb/searchsploit /usr/local/bin/searchsploit
+log_info "Done ..."
+
+# log_info "Cleanup tmp files"
+
+cd $HOME
+
+log_info "Check: source ~/.bash_aliases"
+log_info "Finished Setup Installation!!"

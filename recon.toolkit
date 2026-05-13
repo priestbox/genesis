@@ -1,0 +1,355 @@
+#!/usr/bin/env bash
+# -------------------------------------------------------------------------------------------
+#	masscan --banners
+#	apt-get install ufw
+#	sudo cat /proc/sys/net/ipv4/ip_local_port_range
+#	32768	60999
+#	block single port below or above Linux reserved port range
+#	sudo ufw reset
+#	sudo ufw deny 61000
+#	sudo ufw reload
+#	sudo ufw enable
+#	sudo ufw status verbose
+#
+#	recon.toolkit	--	priest:	Hope that firewall works because your screwed
+#
+#	Tested: Debian 13 (trixie)
+#
+#	Far from complete, though gets enough done quickly
+# -------------------------------------------------------------------------------------------
+#	Description: Automated installation of pentesting tools and dependencies.
+#
+#	Author: neural.priest
+# -------------------------------------------------------------------------------------------
+
+set -e
+
+# --- Configuration ---
+
+# Colors for output
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly NC='\033[0m' # No Color
+
+# --- Paths ---
+
+ASSET="$HOME/BLACKSITES/$HOST"
+readonly BLACKSITES="$HOME/BLACKSITES"
+readonly DEBIAN_FRONTEND=noninteractive
+
+# --- Helper Functions ---
+
+log_info() {
+    printf "${GREEN}[+] $1 ${NC}\n"
+}
+
+log_warn() {
+    printf "${YELLOW}[-] $1 ${NC}\n"
+}
+
+log_err() {
+    printf "${RED}[!] $1 ${NC}\n" >&2
+}
+
+
+# --- Recon toolkit ---
+
+selection() {
+
+    log_info "Recon toolkit: Selection to continue"
+    PS3="Please select an option : "
+    choices=("ASSEMBLE" "PARSE_ADMIN" "PARSE_FULL" "SENSITIVE_ADMIN" "SENSITIVE_FULL" "ALL_attacks" "JS" "BUCKET" "NUCLEI" "Exit")
+    select choice in "${choices[@]}"; 
+        do
+            case $choice in
+                ASSEMBLE)
+                     assemble_interesting_subdomains
+                     sleep 1
+                     exit 1
+                     ;;
+                PARSE_ADMIN)
+                     parse_admin_scan
+                     sleep 1
+                     exit 1
+                     ;;
+                PARSE_FULL)
+                     parse_full_scan
+                     sleep 1
+                     exit 1
+                     ;;
+                SENSITIVE_ADMIN)
+                     sensitive_admin
+                     sleep 1
+                     exit 1
+                     ;;
+                SENSITIVE_FULL)
+                     sensitive_full
+                     sleep 1
+                     exit 1
+                     ;;
+                ALL_attacks)
+                     all_attacks
+                     sleep 1
+                     exit 1
+                     ;;
+                JS)
+                     sensitive_js
+                     sleep 1
+                     exit 1
+                     ;;
+                BUCKET)
+                     bucket
+                     sleep 1
+                     exit 1
+                     ;;
+                NUCLEI)
+                     nuclei_scan
+                     sleep 1
+                     exit 1
+                     ;;
+                Exit)
+                     echo "Aborting script..."
+                     exit 1
+                     ;;
+            esac
+        done
+}
+
+
+# --- Interesting subdomains ---
+
+assemble_interesting_subdomains() {
+
+    log_info "Assembling list of interesting subdomains"
+
+    cat data/subdomains/HOSTS.alive.db | grep -E "admin|administrator|root|sysadmin|secure|api|gateway|auth|login|sso|dev|developer|test|stage|staging|uat|beta|demo|internal|intranet|vpn|portal|dashboard|manage|management|config|control|server|db|database|backup|files|static|cdn" | anew data/subdomains/HOSTS.alive.subdomains.interesting.db
+
+    wc -l data/subdomains/HOSTS.alive.subdomains.interesting.db
+}
+
+
+# --- Run parsing enumeration on data/subdomains/HOSTS.alive.subdomains.interesting.db - ADMIN ---
+
+parse_admin_scan() {
+
+    log_info "Parsing enumeration on data/subdomains/HOSTS.alive.subdomains.interesting.db"
+
+#   cat data/subdomains/HOSTS.alive.subdomains.interesting.db | gau | uro | anew data/urls/urls.www.db
+    cat data/subdomains/HOSTS.alive.subdomains.interesting.db | katana -d 3 -c 50 -silent -f qurl -ignore-query-params -filter-similar -disable-redirects -jc -kf all -aff | uro | anew data/urls/urls.www.db
+
+    cat data/urls/urls.www.db | grep -E "(admin/|administrator/|root/|sysadmin/|secure/|api/|gateway/|auth/|login/|sso/|dev/|developer/|test/|stage/|staging/|uat/|beta/|demo/|internal/|intranet/|vpn/|portal/|dashboard/|manage/|management/|config/|control/|server/|db/|database/|backup/|files/|static/|cdn/|wp-admin/)" | cut -d '/' -f 1,2,3,4 | unfurl domain | anew data/urls/urls.www.subdirectories.interesting.db
+
+    grep -Eo 'https?://[^"]+' data/urls/urls.www.db | grep -Eo '[^*]*/' | cut -d '/' -f 4 | sed '/^[[:space:]]*$/d' | anew data/urls/urls.www.subdirectories.listing.db
+
+    grep -E '\.js($|\?.*)' data/urls/urls.www.db | awk -F '?' '{print $1}' | httpx -mc 200 | sort -u | anew data/urls/urls.www.js.db
+
+    grep -Ev '\.js($|\?.*)' data/urls/urls.www.db | grep -E '\?[^=]+=.+$' | grep '=' | qsreplace | anew data/urls/urls.www.params.db
+    grep -Eo 'https?://[^"]+' data/urls/urls.www.db | cut -d '/' -f 1,2,3,4 | grep '/?' | qsreplace | anew data/urls/urls.www.params.db
+
+    grep 'robots.txt' data/urls/urls.www.db | anew data/urls/robots.txt.db
+}
+
+
+# --- Run parsing enumeration on HOSTS.alive.db - FULL ---
+
+parse_full_scan() {
+
+    log_info "Parsing enumeration on HOSTS.alive.db"
+
+#   cat data/subdomains/HOSTS.alive.db | gau | uro | anew data/urls/urls.www.db
+    cat data/subdomains/HOSTS.alive.db | katana -d 3 -c 50 -silent -f qurl -ignore-query-params -filter-similar -disable-redirects -jc -kf all -aff | uro | anew data/urls/urls.www.db
+
+    cat data/urls/urls.www.db | grep -E "(admin/|administrator/|root/|sysadmin/|secure/|api/|gateway/|auth/|login/|sso/|dev/|developer/|test/|stage/|staging/|uat/|beta/|demo/|internal/|intranet/|vpn/|portal/|dashboard/|manage/|management/|config/|control/|server/|db/|database/|backup/|files/|static/|cdn/|wp-admin/)" | cut -d '/' -f 1,2,3,4 | unfurl domain | anew data/urls/urls.www.subdirectories.interesting.db
+
+    grep -Eo 'https?://[^"]+' data/urls/urls.www.db | grep -Eo '[^*]*/' | cut -d '/' -f 4 | sed '/^[[:space:]]*$/d' | anew data/urls/urls.www.subdirectories.listing.db
+
+    grep -E '\.js($|\?.*)' data/urls/urls.www.db | awk -F '?' '{print $1}' | httpx -mc 200 | sort -u | anew data/urls/urls.www.js.db
+
+    grep -Ev '\.js($|\?.*)' data/urls/urls.www.db | grep -E '\?[^=]+=.+$' | grep '=' | qsreplace | anew data/urls/urls.www.params.db
+    grep -Eo 'https?://[^"]+' data/urls/urls.www.db | cut -d '/' -f 1,2,3,4 | grep '/?' | qsreplace | anew data/urls/urls.www.params.db
+
+    grep 'robots.txt' data/urls/urls.www.db | anew data/urls/robots.txt.db
+}
+
+
+#   Run FFUF for Sensitive content discovery - ADMIN ---
+
+sensitive_admin() {
+
+    log_info "FFUF search for sensitive files/directories on data/urls/urls.www.subdirectories.interesting.db"
+
+#   safe_host=$(echo "$host" | sed 's/http:\\/\\///g; s/https:\\/\\///g; s/\\//_/g')
+
+    cat data/urls/urls.www.subdirectories.interesting.db | \
+        while read host ; \
+            do \
+                ffuf -u https://$host/FUZZ \
+		-w $HOME/genesis/db/sensitive.lst:FUZZ \
+		-H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0" \
+		-c \
+		-t 200 \
+		-rate 250 \
+		-p 2 \
+		-fc 400-402,404-499,500-599 \
+		-recursion \
+		-recursion-depth 2 \
+		-od reports/discovery/html \
+		-of json \
+		-o reports/discovery/$host.json \
+	; done
+
+    jq -C ".results[] | select(.status=="200") | .url, .resultfile" reports/discovery/*.json | tr -d '"'
+
+    echo 'find reports/discovery/html -type f -name 'RESULTFILE' | xargs -I {} firefox-esr {}'
+#   find reports/discovery/html -type f -name 41cadd3d77b3b4a7185453b6608e0635 | xargs -I {} firefox-esr {}
+
+#   Analyze Results
+
+#   Check output files for HTTP status codes:
+#   200 OK: Endpoint exists (e.g., /config.json might leak API keys).
+#   403 Forbidden: Could indicate a protected endpoint worth testing.
+#   301/302 Redirect: Test for open redirects (e.g., /redirect with redirectUrl=evil.com).
+#   Use Burp Suite Community Edition to inspect promising endpoints (e.g., /service-worker.js, /api/users).
+#   For files like service-worker.js, test parameters like redirectUrl for open redirects or XSS using Burp’s Repeater.
+}
+
+
+#   Run FFUF for Sensitive content discovery - FULL ---
+
+sensitive_full() {
+
+    log_info "FFUF search for sensitive files/directories on data/subdomains/HOSTS.alive.subdomains.interesting.db"
+
+#   safe_host=$(echo "$host" | sed 's/http:\\/\\///g; s/https:\\/\\///g; s/\\//_/g')
+
+    cat data/subdomains/HOSTS.alive.subdomains.interesting.db | \
+        while read host ; \
+            do \
+                ffuf -u https://$host/FUZZ \
+		-w $HOME/genesis/db/sensitive.lst:FUZZ \
+		-H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0" \
+		-c \
+		-t 200 \
+		-rate 250 \
+		-p 2 \
+		-fc 400-402,404-499,500-599 \
+		-recursion \
+		-recursion-depth 2 \
+		-od reports/discovery/html \
+		-of json \
+		-o reports/discovery/$host.json \
+	; done
+
+    jq -C ".results[] | select(.status=="200") | .url, .resultfile" reports/discovery/*.json | tr -d '"'
+
+    echo 'find reports/discovery/html -type f -name 'RESULTFILE' | xargs -I {} firefox-esr {}'
+#   find reports/discovery/html -type f -name 41cadd3d77b3b4a7185453b6608e0635 | xargs -I {} firefox-esr {}
+
+#   Analyze Results
+
+#   Check output files for HTTP status codes:
+#   200 OK: Endpoint exists (e.g., /config.json might leak API keys).
+#   403 Forbidden: Could indicate a protected endpoint worth testing.
+#   301/302 Redirect: Test for open redirects (e.g., /redirect with redirectUrl=evil.com).
+#   Use Burp Suite Community Edition to inspect promising endpoints (e.g., /service-worker.js, /api/users).
+#   For files like service-worker.js, test parameters like redirectUrl for open redirects or XSS using Burp’s Repeater.
+}
+
+
+# --- Amazing ALL method: idor+sql url path+post method+originIp sql bypass+git+env disclosure ---
+
+all_attacks() {
+
+    log_info "FFUF search for vulnerabilities on data/subdomains/HOSTS.alive.subdomains.interesting.db"
+
+#   safe_host=$(echo "$host" | sed 's/http:\\/\\///g; s/https:\\/\\///g; s/\\//_/g')
+
+    cat data/subdomains/HOSTS.alive.subdomains.interesting.db | \
+        while read host ; \
+            do \
+                ffuf -u $host/FUZZ \
+		-w $HOME/genesis/db/all_attacks.txt:FUZZ \
+		-H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0" \
+		-c \
+		-t 200 \
+		-rate 250 \
+		-p 2 \
+		-mc 200 \
+               	-recursion \
+		-recursion-depth 3 \
+		-od reports/all_attacks/html \
+		-of json \
+		-o reports/all_attacks/$host.json \
+	; done
+
+    jq -C ".results[] | select(.status=="200") | .url, .resultfile" reports/discovery/all_attacks/*.json | tr -d '"'
+
+    echo 'find reports/all_attacks/html -type f -name 'RESULTFILE' | xargs -I {} firefox-esr {}'
+#   find reports/all_attacks/html -type f -name 41cadd3d77b3b4a7185453b6608e0635 | xargs -I {} firefox-esr {}
+
+#   -e \ asp,aspx,bat,c,cfm,cgi,css,com,dll,exe,hta,htm,html,inc,jhtml,js,jsa,json,jsp,log,mdb,nsf,pcap,php,php2,php3,php4,php5,php6,php7,phps,pht,phtml,pl,phar,rb,rb~,reg,sh,shtml,sql,swf,txt,xml,conf,config,bak,bkp,backup,swp,swp~,old,db,rar,sql.gz,sql.zip,sql.tar.gz,tar,tar.bz2,tar.gz,py,py~,cache
+}
+
+
+
+# --- .JS sieve ---
+
+sensitive_js() {
+
+    log_info "Parsing .js files for secrets ---"
+
+    cat data/urls/urls.www.js.db | jsleak -s -l -k | anew reports/discovery/secrets/secrets.js.db
+    awk -F "Found link: \[./" '{print $2}' reports/discovery/secrets/secrets.js.db | cut -d ']' -f 1 | sed '/^[[:space:]]*$/d' | sed 's/$/\//g' | anew data/urls/urls.www.subdirectories.js.db
+    grep "Found link: \[" reports/discovery/secrets/secrets.js.db | awk -F "\[\/" '{print $2}' | grep '/]' | cut -d ']' -f 1 | anew data/urls/urls.www.subdirectories.js.db
+
+    nuclei -list data/urls/urls.www.js.db -vv -c 25 -rl 500 -t ~/nuclei-templates/http/exposures -o reports/discovery/secrets/exposures.js.db
+    nuclei -list data/urls/urls.www.js.db -vv -c 25 -rl 500 -t ~/genesis/nuclei/credentials-disclosure-all.yaml -o reports/discovery/secrets/credentials-disclosure-all.js.db
+
+    cat data/urls/urls.www.js.db | httpx -er "(?:(https?|ftp|git|ssh|telnet|smtp|imap|pop3|ldap|sftp|smb|nfs|rtmp|rtsp|ws|wss|irc|news|gopher|rsync|data):\/\/|\/)[^\s\"'\*\(\){};\\\^\$\&<>/\\?#]+(?:\?[^\s\"'<>/\\?#]+)?(?:\/[^\s\"'<>/\\?#]+)*" -json -mr "application/javascript|text/javascript" | jq -r '.extracts[]' | tr -d '[],' | tee reports/discovery/secrets/protocol.js.db
+
+    # grep "target.com\|targ.co" reports/discovery/secrets/protocol.js.db | cut -d '"' -f2 | cut -d '"' -f1 | anew reports/discovery/secrets/protocol.host.js.db
+}
+
+
+# --- s3 buckets discovery ---
+
+bucket() {
+
+    log_info "s3 bucket discovery"
+
+    cat data/urls/urls.www.js.db | xargs -I {} curl -s {} | grep -Eo 'http[s]?://[^"]*.s3.amazonaws.com' | sort -u | anew reports/discovery/bucket/s3-disclosures.db
+    cat data/urls/urls.www.js.db | xargs -I {} curl -s {} | grep -Eo 'http[s]?://[^"]*\.s3\.amazonaws\.com[^" ]*' | sort -u | anew reports/discovery/bucket/s3-disclosures.db
+    nuclei -list data/urls/urls.www.js.db -vv -c 25 -rl 500 -t ~/genesis/nuclei/awspace.yaml -o reports/discovery/bucket/awspace.js.db
+}
+
+
+# --- Run nuclei on HOSTS.alive.db ---
+
+nuclei_scan() {
+
+    log_info "Nuclei scanning on HOSTS.alive.db"
+
+#   Target HOSTS.alive.db
+    nuclei -list data/subdomains/HOSTS.alive.db -vv -c 25 -rl 500 -fhr -t ~/genesis/nuclei -o data/nuclei/genesis.db
+    nuclei -list data/subdomains/HOSTS.alive.db -vv -c 25 -rl 500 -severity medium,high,critical -fhr -t ~/nuclei-templates/http/cves -o data/nuclei/cves.db
+    nuclei -list data/subdomains/HOSTS.alive.db -vv -c 25 -rl 500 -severity medium.high,critical -fhr -t ~/nuclei-templates/http/exposures -o data/nuclei/exposures.db
+    nuclei -list data/subdomains/HOSTS.alive.db -vv -c 25 -rl 500 -severity medium,high,critical -fhr -t ~/nuclei-templates/http/vulnerabilities/generic -o data/nuclei/generic.db
+
+#   Target gau-urls.www.db
+    nuclei -list data/urls/urls.www.db -vv -c 25 -rl 500 -t ~/genesis/nuclei -o data/nuclei/genesis-urls.db
+    nuclei -list data/urls/urls.www.db -vv -c 25 -rl 500 -severity medium,high,critical -t ~/nuclei-templates/dast/vulnerabilities -dast -o data/nuclei/dast-urls.db
+}
+
+
+# --- Main function: flowstream ---
+
+main() {
+
+    cd "$ASSET"
+    selection
+}
+
+# --- Main Execute
+
+main

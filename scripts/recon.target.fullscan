@@ -191,7 +191,7 @@ fping_alive_selection() {
 
     log_info "FPING Alive Probe: Selection to continue"
     PS3="Please select an option : "
-    choices=("FPING_CDIR" "FPING_BASIC" "exit")
+    choices=("FPING_CDIR" "FPING_BASIC" "Exit")
     select choice in "${choices[@]}"; 
         do
             case $choice in

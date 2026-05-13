@@ -191,7 +191,7 @@ fping_alive_selection() {
 
     log_info "FPING Alive Probe: Selection to continue"
     PS3="Please select an option : "
-    choices=("FPING_CDIR" "FPING_BASIC" "exit")
+    choices=("FPING_CDIR" "FPING_BASIC" "Exit")
     select choice in "${choices[@]}"; 
         do
             case $choice in
@@ -342,7 +342,7 @@ main() {
     setup_directory_structure
     assemble_subdomains
     massdns_convert
-#   http_alive_selection 	# 1), 2), 3,exit)
+    http_alive_selection 	# 1), 2), 3,exit)
 #   httprobe_alive		# Only one (1) can be used at a time
 #   httpx_alive			# Only one (1) can be used at a time: Select 1 of 2 options
     fping_alive_selection 	# 1), 2), 3,exit)

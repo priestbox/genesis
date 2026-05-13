@@ -84,7 +84,11 @@ sudo apt-get install -y jq whois bind9-dnsutils curl            # script depende
 sudo apt-get install -y ufw gcc make build-essential git        # massdns, masscan
 sudo apt-get install -y python3-pip python3-venv                # eyewitness, metasploit
 sudo apt-get install -y xsltproc libxml2 libxml2-dev            # xsltproc
+sudo apt-get install -y python3-pip python3-setuptools pipx     # pip3, pipx
 sudo apt-get install -y libxml2-utils unzip                     # ...
+
+python3 -m venv $HOME/.venv
+pipx install uro
 
 log_info "Done ..."
 
@@ -142,6 +146,15 @@ go install -v github.com/tomnomnom/unfurl@latest
 go install -v github.com/tomnomnom/httprobe@latest
 go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
 go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+go install -v github.com/projectdiscovery/katana/cmd/katana@latest
+go install -v github.com/tomnomnom/gf@latest
+go install -v github.com/lc/gau/v2/cmd/gau@latest
+go install -v github.com/ffuf/ffuf/v2@latest
+go install -v github.com/tomnomnom/qsreplace@latest
+go install -v github.com/channyein1337/jsleak@latest
+
+echo 'source $HOME/go/pkg/mod/github.com/tomnomnom/gf@v0.0.0-20200618134122-dcd4c361f9f5/gf-completion.bash' >> $HOME/.bashrc
 
 log_info "GO_LANG Binaries Done ..."
 
@@ -212,6 +225,16 @@ sudo git clone https://github.com/sullo/nikto.git /opt/nikto
 # ./nikto.pl -h <target>
 log_info "Done ..."
 
+log_info "Installing dirsearch"
+cd $GIT_DIR
+sudo git clone https://github.com/maurosoria/dirsearch.git --depth 1 /opt/dirsearch
+cd dirsearch
+source $HOME/.venv/bin/activate
+pip3 install -r requirements.txt 
+ln -s $PWD/dirsearch.py $HOME/.local/bin/dirsearch
+deactivate
+log_info "Done ..."
+
 if [[ ! -d "/opt/SecLists" ]];then
 log_info "Install SecLists?, would you like to install it now"
 PS3="Please select an option : "
@@ -221,7 +244,7 @@ select choice in "${choices[@]}"; do
                 yes)		
 			log_info "Installing SecLists"
 			cd $GIT_DIR
-			# sudo git clone https://github.com/danielmiessler/SecLists /opt/SecLists
+			sudo git clone https://github.com/danielmiessler/SecLists /opt/SecLists
 			# This file breaks MASSDNS and needs to be trimmed
 			# cd SecLists/Discovery/DNS
 			# cat dns-Jhaddix.txt | head -n -14 > dns-Jhaddix-cleaned.txt

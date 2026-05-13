@@ -32,9 +32,11 @@ readonly NC='\033[0m' # No Color
 
 # --- Paths ---
 
-readonly BLACKBOX="$HOME/BLACKBOX"
-readonly BLACKSITES="$HOME/BLACKSITES"
 readonly DEBIAN_FRONTEND=noninteractive
+
+alias bb='cd $HOME/BLACKBOX ; clear ; ls -la'
+alias bs='cd $HOME/BLACKSITES ; clear ; ls -la'
+alias bh='cd $HOME/BLACKSITES/$HOST ; clear ; ls -la'
 
 # --- Helper Functions ---
 
@@ -50,9 +52,6 @@ log_err() {
     printf "${RED}[!] $1 ${NC}\n" >&2
 }
 
-alias bb='cd $BLACKBOX ; clear ; ls -la'
-alias bs='cd $BLACKSITES ; clear ; ls -la'
-alias bh='cd $BLACKSITES/$HOST ; clear ; ls -la'
 
 recon.host()	{
 

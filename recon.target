@@ -40,6 +40,11 @@ readonly BLACKBOX="$HOME/BLACKBOX"
 readonly BLACKSITES="$HOME/BLACKSITES"
 readonly DEBIAN_FRONTEND=noninteractive
 
+# --- PORT Configuration ---
+
+export PORTSMINI="80,443,8000,8080,8443"
+export PORTSFULL="`cat /usr/share/nmap/nmap-services | grep -i tcp | sort -k 3 -n -r | awk '{print $2}' | cut -d "/" -f1 | head -2008 | tr '\n' "," | sed 's/,$//'`"
+
 # --- Helper Functions ---
 
 log_info() {
@@ -54,10 +59,6 @@ log_err() {
     printf "${RED}[!] $1 ${NC}\n" >&2
 }
 
-# --- Network CDIR for fping: Option 1, FPING_CDIR---
-
-export CDIR=$1
-
 # --- Directory Framework Structure ---
 
 setup_directory_structure() {
@@ -68,22 +69,29 @@ setup_directory_structure() {
 
     if [ -z "${HOST}" ]; then
         log_warn "Usage: recon.host <target.com>"
-        log_warn "recon.target"
-        log_warn "recon.target 192.168.0.0/16"
+        log_warn "Usage: recon.target"
         exit 1
     elif [ ! -d "$HOST" ]; then
     
         mkdir -p "$BLACKSITES/$HOST/data/nmap"
+        mkdir -p "$BLACKSITES/$HOST/data/nmap-xml"
+        mkdir -p "$BLACKSITES/$HOST/data/nmap-html"
         mkdir -p "$BLACKSITES/$HOST/data/massdns"
         mkdir -p "$BLACKSITES/$HOST/data/masscan"
         mkdir -p "$BLACKSITES/$HOST/data/nmap-split"
         mkdir -p "$BLACKSITES/$HOST/data/subdomains"
-
-        mkdir -p "$BLACKSITES/$HOST/reports/nmap"
-        mkdir -p "$BLACKSITES/$HOST/reports/masscan"
-        mkdir -p "$BLACKSITES/$HOST/reports/nmap-xml"
-        mkdir -p "$BLACKSITES/$HOST/reports/nmap-html"
+        mkdir -p "$BLACKSITES/$HOST/data/subdomains-split"
+        mkdir -p "$BLACKSITES/$HOST/data/urls"
+        mkdir -p "$BLACKSITES/$HOST/data/nuclei"
         
+        mkdir -p "$BLACKSITES/$HOST/reports/info-disclosure"
+        mkdir -p "$BLACKSITES/$HOST/reports/discovery"
+        mkdir -p "$BLACKSITES/$HOST/reports/discovery/html"
+        mkdir -p "$BLACKSITES/$HOST/reports/discovery/secrets"
+        mkdir -p "$BLACKSITES/$HOST/reports/discovery/bucket"
+        mkdir -p "$BLACKSITES/$HOST/reports/all_attacks"
+        mkdir -p "$BLACKSITES/$HOST/reports/all_attacks/html"
+
         mkdir -p "$BLACKSITES/$HOST/screenshots"
 
         cd "$BLACKSITES/$HOST"
@@ -100,26 +108,13 @@ setup_directory_structure() {
 assemble_subdomains() {
 
     log_info "Assembling list of $HOST subdomains via crt.sh"
-    log_info "FPING Network CDIR: $CDIR"
+
     : > data/subdomains/HOSTS.db
 
     curl -s "https://crt.sh/?q=.$HOST&output=json" | jq -r '.[].name_value' | sed 's/*.//g' | grep -w $HOST\$ | sort | anew data/subdomains/HOSTS.db
     subfinder -d $HOST -t 35 -all -silent | sort | anew data/subdomains/HOSTS.db  #	API KEYS REQUIRED	$HOME/.config/subfinder/provider-config.yaml
 
     wc -l data/subdomains/HOSTS.db
-}
-
-
-# --- Convert HOSTS.db to IP's ---
-
-massdns_convert() {
-
-    log_info "Converting HOSTS.db to HOSTS-ip.db via massdns"
-
-    sudo massdns -r /opt/massdns/lists/resolvers.txt -t A -o S -w data/massdns/MASSDNS-results.db data/subdomains/HOSTS.db
-    grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b" data/massdns/MASSDNS-results.db | anew data/subdomains/HOSTS-ip.db
-
-    wc -l data/subdomains/HOSTS-ip.db
 }
 
 
@@ -161,7 +156,13 @@ httprobe_alive() {	# HTTPROBE
 
     cat data/subdomains/HOSTS.db | httprobe -c 150 -p http:80 https:443 http:8000 http:8080 https:8443 | anew data/subdomains/HOSTS.alive.full.db | unfurl -u domains | anew data/subdomains/HOSTS.alive.db
 
+    cat data/subdomains/HOSTS.alive.db | xargs -I {} bash -c 'echo -e "\e[1;34m[URL]\e[0m {}" && curl --connect-timeout 5 -s -I {} | grep -i "server:"' | anew reports/info-disclosure/httprobe-server-tech.db
+
     wc -l data/subdomains/HOSTS.alive.db
+
+    split -l 1000 --numeric-suffixes=1 --additional-suffix=-HOSTS.db data/subdomains/HOSTS.alive.db
+
+    mv $BLACKSITES/$HOST/*-HOSTS.db data/subdomains-split/
 
     echo 'HTTPROBE probed, standard http/s server probe' > data/subdomains/method.txt
 }
@@ -173,95 +174,57 @@ httpx_alive() {		# HTTPX "Select method" 1), 2)
 
     log_info "Probing for Live Hosts/services via httpx: 80,443,8000,8080,8443"
 
-#   httpx -l data/subdomains/HOSTS.db -threads 150 -ports 80,443,8000,8080,8443 -j -o data/subdomains/HTTPX-probe.json
-
-    httpx -l data/subdomains/HOSTS.db -server -title -tech-detect -asn -status-code -favicon -location -content-length -tls-grab -cname -vhost -follow-redirects -ip -silent -threads 150 -ports 80,443,8000,8080,8443 -j -o data/subdomains/HTTPX-probe.json
-
+    httpx -l data/subdomains/HOSTS.db -server -title -tech-detect -status-code -cname -silent -threads 150 -ports $PORTSMINI -j -o data/subdomains/HTTPX-probe.json
     jq -r '. | .url' data/subdomains/HTTPX-probe.json | anew data/subdomains/HOSTS.alive.full.db | unfurl -u domains | anew data/subdomains/HOSTS.alive.db
+
+    jq -r '. | .url, .tech, .wordpress' data/subdomains/HTTPX-probe.json | anew reports/info-disclosure/httpx-server-tech.db
 
     wc -l data/subdomains/HOSTS.alive.db
 
-    echo 'HTTPX probed, method 2, FULL enumeration. JSON' > data/subdomains/method.txt
+    split -l 1000 --numeric-suffixes=1 --additional-suffix=-HOSTS.db data/subdomains/HOSTS.alive.db
+
+    mv $BLACKSITES/$HOST/*-HOSTS.db data/subdomains-split/
+
+    echo 'HTTPX probed, JSON, standard http/s server probe' > data/subdomains/method.txt
 }
 
 
-# --- Preempt probe selection for alive hosts ---
+# --- Skip nmap and eyewitness scan, or exit ---
 
-fping_alive_selection() {
+skip_selection() {
 
-    log_info "FPING Alive Probe: Selection to continue"
+    log_info "Skip Scans?: Selection to continue"
     PS3="Please select an option : "
-    choices=("FPING_CDIR" "FPING_BASIC" "exit")
+    choices=("NO" "Exit")
     select choice in "${choices[@]}"; 
         do
             case $choice in
-                FPING_CDIR)
-                     fping_alive
-                     sleep 1
-                     break
-                     ;;
-                FPING_BASIC)
-                     fping_alive_basic
+                NO)
+                     nmap_scan
+                     eyewitness_screenshot
                      sleep 1
                      break
                      ;;
                 Exit)
+                     permissions_set
+                     recon_drop
                      echo "Please reassess situation and rerun script"
                      echo "Aborting script..."
                      exit 1
                      ;;
             esac
         done
+    log_info "Scans, Continued"
 }
 
 
-# ---  Detect live IP's via FPING to populate HOSTS-alive-ip.db ---
-
-fping_alive() {		# FPING
-
-    log_info "Probing CDIR for Live IP's via fping"
-
-    sudo fping -qa -g ${CDIR} | grep -v 127.0.0.1 | grep -v 0.0.0.0 | anew data/subdomains/HOSTS-alive-ip.db
-    sed -i -e "1d" data/subdomains/HOSTS-alive-ip.db
-
-    wc -l data/subdomains/HOSTS-alive-ip.db
-}
-
-
-# ---  Detect live IP's via FPING to populate HOSTS-alive-ip.db ---
-
-fping_alive_basic() {		# FPING
-
-    log_info "Probing for Live IP's via fping"
-
-    sudo fping -q -a -f data/subdomains/HOSTS-ip.db | grep -v 127.0.0.1 | grep -v 0.0.0.0 | anew data/subdomains/HOSTS-alive-ip.db
-
-    wc -l data/subdomains/HOSTS-alive-ip.db
-}
-
-
-# --- TOP 2000 service ports per detected live 80, 443 IPs ---
-
-masscan_assess() {
-
-    log_info "Probing Hosts IP's TOP 2000 ports via masscan"
-    
-    sudo masscan -iL data/subdomains/HOSTS-alive-ip.db --rate=1000 --banners --source-port 61000 -p `cat /usr/share/nmap/nmap-services | grep -i tcp | sort -k 3 -n -r | awk '{print $2}' | cut -d "/" -f1 | head -2008 | tr '\n' "," | sed 's/,$//'` --excludefile /opt/masscan/data/exclude.conf --output-format binary --output-filename data/masscan/MASSCAN.bin
-    sudo masscan --readscan data/masscan/MASSCAN.bin -oJ reports/masscan/MASSCAN-2000-ports.json
-    sudo masscan --readscan data/masscan/MASSCAN.bin -oX reports/masscan/MASSCAN-2000-ports.xml
-}
-
-#   setg rhosts $BLACKMASS/data/subdomains/HOSTS-alive-ip.db
-#   db_import $BLACKMASS/reports/masscan/MASSCAN-2000-ports.xml
-#   db_nmap -Pn -R --top-ports 100 --open -sSV -O -vvv --host-timeout 55 -T4 --min-hostgroup 128 --min-parallelism 64 --script=vuln --script=banner --script=http-headers -iL data/subdomains/HOSTS-alive-ip.db
-
-# --- Versioning, banner, vulners, http-vulners-regex, scipag_vulscan, vulscandb=exploitdb.csv, banner, http-headers
+# --- Versioning, vuln, vulners, http-vulners-regex, scipag_vulscan, vulscandb=exploitdb.csv, banner, http-headers
 
 nmap_scan() {
 
-    log_info "Probing Hosts IP's & Ports via nmap: Versioning, banners, vuln, vulners, vulscan, http-vulners-regex, banner, http-headers"
+    log_info "Probing Hosts IP's & Ports via nmap: Versioning, vuln, vulners, vulscan, http-vulners-regex, banner, http-headers"
 
-    cat reports/masscan/MASSCAN-2000-ports.json | awk '{print $3 $9}' | tr -d , | tr '"' " " | sort -u | sed '1d' | awk '{print "nmap -p "  $2" "  $1 " -oX reports/nmap-xml/"$1"-result-"$2".xml -Pn -R --open -sSV -O -vvv --host-timeout 55 --script=vuln --script=banner --script=http-headers"}' | sort -u | sort -R > data/nmap/NMAP-SCAN.db
+    cat data/subdomains/HOSTS.alive.full.db | awk -F '://' '{print $2}' | awk -F ':' '{print "nmap "$1" -p " $2 " -oX data/nmap-xml/"$1"-"$2".xml -Pn -R --open -sSV -O -vvv --host-timeout 55 --script=vulners --script=http-vulners-regex --script=banner --script=http-headers"}' | sort -u | sort -R > data/nmap/NMAP-SCAN.db
 
     IFS=$'\n'
 
@@ -275,8 +238,8 @@ nmap_scan() {
 
     log_info "Structuring && Format conversion: *.xml && *.html"
 
-    for file in $(ls reports/nmap-xml/*.xml); do 
-        xsltproc $file -o reports/nmap-html/$(basename "$file").html; 
+    for file in $(ls data/nmap-xml/*.xml); do 
+        xsltproc $file -o data/nmap-html/$(basename "$file").html; 
     done
 }
 
@@ -305,23 +268,6 @@ permissions_set() {
 }
 
 
-#--- Reverse Host IP's to actual Hosts via host command to populate HOSTNAMES.db  ---
-
-recon_ip2host()	{
-	
-    log_info "Reverse Host IP's to actual Hosts via host command to populate HOSTNAMES.db"
-
-    cat data/subdomains/HOSTS-alive-ip.db | \
-    while read value ; \
-        do \
-            key=$(host $value | cut -d " " -f 5 | grep '.com' | sed 's/com.$/com/') ; \
-            echo "$value $key" | \
-            grep '.com' ; \
-        done | \
-    anew data/subdomains/HOSTNAMES.db
-}
-
-
 # --- Copy asset recon to .msf4_blacksites ---
 
 recon_drop() {
@@ -341,25 +287,20 @@ recon_drop() {
 main() {
     setup_directory_structure
     assemble_subdomains
-    massdns_convert
     http_alive_selection 	# 1), 2), 3,exit)
 #   httprobe_alive		# Only one (1) can be used at a time
 #   httpx_alive			# Only one (1) can be used at a time: Select 1 of 2 options
-    fping_alive_selection 	# 1), 2), 3,exit)
-#   fping_alive         	# Only one (1) can be used at a time
-#   fping_alive_basic		# Only one (1) can be used at a time
-    masscan_assess
-    nmap_scan
-    eyewitness_screenshot
-    permissions_set
-    recon_ip2host
-    recon_drop
+    skip_selection              # 1), 2),exit)
+#   nmap_scan
+#   eyewitness_screenshot
+#   permissions_set
+#   recon_drop
     log_info "msfupdate"
     log_info "msfdb init"
     log_info "msfconsole" 
     log_info "workspace -a $HOST"
-    log_info "setg rhosts file://data/subdomains/HOSTS-alive-ip.db"
-    log_info "db_import data/subdomains/HOSTS-alive-ip.db"
+    log_info "setg rhosts file://data/subdomains/HOSTS.alive.db"
+    log_info "db_import data/subdomains/HOSTS.alive.db"
     log_info "msfconsole -r $HOME/.msf4_blacksites/db_nmap_vuln_2000.rc"
     log_info "Finished,...!"
 }

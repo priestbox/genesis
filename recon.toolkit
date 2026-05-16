@@ -138,14 +138,14 @@ parse_admin_scan() {
 #   cat data/subdomains/HOSTS.alive.subdomains.interesting.db | gau | uro | anew data/urls/urls.www.db
     cat data/subdomains/HOSTS.alive.subdomains.interesting.db | katana -d 3 -c 50 -silent -f qurl -ignore-query-params -filter-similar -disable-redirects -jc -kf all -aff | uro | anew data/urls/urls.www.db
 
-    cat data/urls/urls.www.db | grep -E "(admin/|administrator/|root/|sysadmin/|secure/|api/|gateway/|auth/|login/|sso/|dev/|developer/|test/|stage/|staging/|uat/|beta/|demo/|internal/|intranet/|vpn/|portal/|dashboard/|manage/|management/|config/|control/|server/|db/|database/|backup/|files/|static/|cdn/|wp-admin/)" | cut -d '/' -f 1,2,3,4 | unfurl domain | anew data/urls/urls.www.subdirectories.interesting.db
+    cat data/urls/urls.www.db | grep -E "(admin/|administrator/|root/|sysadmin/|secure/|api/|gateway/|auth/|login/|sso/|dev/|developer/|test/|stage/|staging/|uat/|beta/|demo/|internal/|intranet/|vpn/|portal/|dashboard/|manage/|management/|config/|control/|server/|db/|database/|backup/|files/|static/|cdn/|wp-admin/)" | cut -d '/' -f 1,2,3,4 | awk -F '://' '{print $2}' | anew data/urls/urls.www.subdirectories.interesting.db
 
     grep -Eo 'https?://[^"]+' data/urls/urls.www.db | grep -Eo '[^*]*/' | cut -d '/' -f 4 | sed '/^[[:space:]]*$/d' | anew data/urls/urls.www.subdirectories.listing.db
 
     grep -E '\.js($|\?.*)' data/urls/urls.www.db | awk -F '?' '{print $1}' | httpx -mc 200 | sort -u | anew data/urls/urls.www.js.db
 
-    grep -Ev '\.js($|\?.*)' data/urls/urls.www.db | grep -E '\?[^=]+=.+$' | grep '=' | qsreplace | anew data/urls/urls.www.params.db
-    grep -Eo 'https?://[^"]+' data/urls/urls.www.db | cut -d '/' -f 1,2,3,4 | grep '/?' | qsreplace | anew data/urls/urls.www.params.db
+    grep -Ev '\.js($|\?.*)' data/urls/urls.www.db | grep -E '\?[^=]+=.+$' | grep '=' | qsreplace | awk -F '://' '{print $2}' | anew data/urls/urls.www.params.db
+    grep -Eo 'https?://[^"]+' data/urls/urls.www.db | cut -d '/' -f 1,2,3,4 | grep '/?' | qsreplace | awk -F '://' '{print $2}' | anew data/urls/urls.www.params.db
 
     grep 'robots.txt' data/urls/urls.www.db | anew data/urls/robots.txt.db
 }
@@ -160,14 +160,14 @@ parse_full_scan() {
 #   cat data/subdomains/HOSTS.alive.db | gau | uro | anew data/urls/urls.www.db
     cat data/subdomains/HOSTS.alive.db | katana -d 3 -c 50 -silent -f qurl -ignore-query-params -filter-similar -disable-redirects -jc -kf all -aff | uro | anew data/urls/urls.www.db
 
-    cat data/urls/urls.www.db | grep -E "(admin/|administrator/|root/|sysadmin/|secure/|api/|gateway/|auth/|login/|sso/|dev/|developer/|test/|stage/|staging/|uat/|beta/|demo/|internal/|intranet/|vpn/|portal/|dashboard/|manage/|management/|config/|control/|server/|db/|database/|backup/|files/|static/|cdn/|wp-admin/)" | cut -d '/' -f 1,2,3,4 | unfurl domain | anew data/urls/urls.www.subdirectories.interesting.db
+    cat data/urls/urls.www.db | grep -E "(admin/|administrator/|root/|sysadmin/|secure/|api/|gateway/|auth/|login/|sso/|dev/|developer/|test/|stage/|staging/|uat/|beta/|demo/|internal/|intranet/|vpn/|portal/|dashboard/|manage/|management/|config/|control/|server/|db/|database/|backup/|files/|static/|cdn/|wp-admin/)" | cut -d '/' -f 1,2,3,4 | awk -F '://' '{print $2}' | anew data/urls/urls.www.subdirectories.interesting.db
 
     grep -Eo 'https?://[^"]+' data/urls/urls.www.db | grep -Eo '[^*]*/' | cut -d '/' -f 4 | sed '/^[[:space:]]*$/d' | anew data/urls/urls.www.subdirectories.listing.db
 
     grep -E '\.js($|\?.*)' data/urls/urls.www.db | awk -F '?' '{print $1}' | httpx -mc 200 | sort -u | anew data/urls/urls.www.js.db
 
-    grep -Ev '\.js($|\?.*)' data/urls/urls.www.db | grep -E '\?[^=]+=.+$' | grep '=' | qsreplace | anew data/urls/urls.www.params.db
-    grep -Eo 'https?://[^"]+' data/urls/urls.www.db | cut -d '/' -f 1,2,3,4 | grep '/?' | qsreplace | anew data/urls/urls.www.params.db
+    grep -Ev '\.js($|\?.*)' data/urls/urls.www.db | grep -E '\?[^=]+=.+$' | grep '=' | qsreplace | awk -F '://' '{print $2}' | anew data/urls/urls.www.params.db
+    grep -Eo 'https?://[^"]+' data/urls/urls.www.db | cut -d '/' -f 1,2,3,4 | grep '/?' | qsreplace | awk -F '://' '{print $2}' | anew data/urls/urls.www.params.db
 
     grep 'robots.txt' data/urls/urls.www.db | anew data/urls/robots.txt.db
 }
@@ -188,21 +188,21 @@ sensitive_admin() {
 		-w $HOME/genesis/db/sensitive.lst:FUZZ \
 		-H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0" \
 		-c \
-		-t 200 \
+		-t 250 \
 		-rate 250 \
 		-p 2 \
 		-fc 400-402,404-499,500-599 \
 		-recursion \
 		-recursion-depth 2 \
-		-od reports/discovery/html \
+		-od reports/discovery/sensitive/html \
 		-of json \
-		-o reports/discovery/$host.json \
+		-o reports/discovery/sensitive/"$(echo "$host" | cut -d '/' -f 1)".json \
 	; done
 
-    jq -C ".results[] | select(.status=="200") | .url, .resultfile" reports/discovery/*.json | tr -d '"'
+    jq -C ".results[] | select(.status=="200") | .url, .resultfile" reports/discovery/sensitive/*.json | tr -d '"'
 
-    echo 'find reports/discovery/html -type f -name 'RESULTFILE' | xargs -I {} firefox-esr {}'
-#   find reports/discovery/html -type f -name 41cadd3d77b3b4a7185453b6608e0635 | xargs -I {} firefox-esr {}
+    echo 'find reports/discovery/sensitive/html -type f -name 'RESULTFILE' | xargs -I {} firefox-esr {}'
+#   find reports/discovery/sensitive/html -type f -name 41cadd3d77b3b4a7185453b6608e0635 | xargs -I {} firefox-esr {}
 
 #   Analyze Results
 
@@ -230,21 +230,21 @@ sensitive_full() {
 		-w $HOME/genesis/db/sensitive.lst:FUZZ \
 		-H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0" \
 		-c \
-		-t 200 \
+		-t 250 \
 		-rate 250 \
 		-p 2 \
 		-fc 400-402,404-499,500-599 \
 		-recursion \
 		-recursion-depth 2 \
-		-od reports/discovery/html \
+		-od reports/discovery/sensitive/html \
 		-of json \
-		-o reports/discovery/$host.json \
+		-o reports/discovery/sensitive/$host.json \
 	; done
 
-    jq -C ".results[] | select(.status=="200") | .url, .resultfile" reports/discovery/*.json | tr -d '"'
+    jq -C ".results[] | select(.status=="200") | .url, .resultfile" reports/discovery/sensitive/*.json | tr -d '"'
 
-    echo 'find reports/discovery/html -type f -name 'RESULTFILE' | xargs -I {} firefox-esr {}'
-#   find reports/discovery/html -type f -name 41cadd3d77b3b4a7185453b6608e0635 | xargs -I {} firefox-esr {}
+    echo 'find reports/discovery/sensitive/html -type f -name 'RESULTFILE' | xargs -I {} firefox-esr {}'
+#   find reports/discovery/sensitive/html -type f -name 41cadd3d77b3b4a7185453b6608e0635 | xargs -I {} firefox-esr {}
 
 #   Analyze Results
 
@@ -265,29 +265,36 @@ all_attacks() {
 
 #   safe_host=$(echo "$host" | sed 's/http:\\/\\///g; s/https:\\/\\///g; s/\\//_/g')
 
-    cat data/subdomains/HOSTS.alive.subdomains.interesting.db | \
+#   data/urls/urls.www.params.db
+#   data/urls/urls.www.subdirectories.interesting.db
+#   data/subdomains/HOSTS.alive.subdomains.interesting.db
+
+    cat data/urls/urls.www.params.db | \
+        qsreplace "FUZZ" | \
         while read host ; \
             do \
-                ffuf -u $host/FUZZ \
+                ffuf -u $host \
 		-w $HOME/genesis/db/all_attacks.txt:FUZZ \
 		-H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0" \
 		-c \
-		-t 200 \
+		-t 250 \
 		-rate 250 \
-		-p 2 \
+		-p 1 \
 		-mc 200 \
                	-recursion \
 		-recursion-depth 3 \
 		-od reports/all_attacks/html \
 		-of json \
-		-o reports/all_attacks/$host.json \
+		-o reports/all_attacks/"$(echo "$host" | awk -F '://' '{print $2}' | cut -d '/' -f 1)".json \
 	; done
 
-    jq -C ".results[] | select(.status=="200") | .url, .resultfile" reports/discovery/all_attacks/*.json | tr -d '"'
+    jq -C ".results[] | select(.status=="200") | .url, .resultfile" reports/all_attacks/*.json | tr -d '"'
 
     echo 'find reports/all_attacks/html -type f -name 'RESULTFILE' | xargs -I {} firefox-esr {}'
 #   find reports/all_attacks/html -type f -name 41cadd3d77b3b4a7185453b6608e0635 | xargs -I {} firefox-esr {}
-
+#	-od reports/all_attacks/html \
+#	-of json \
+#	-o reports/all_attacks/$host.json \
 #   -e \ asp,aspx,bat,c,cfm,cgi,css,com,dll,exe,hta,htm,html,inc,jhtml,js,jsa,json,jsp,log,mdb,nsf,pcap,php,php2,php3,php4,php5,php6,php7,phps,pht,phtml,pl,phar,rb,rb~,reg,sh,shtml,sql,swf,txt,xml,conf,config,bak,bkp,backup,swp,swp~,old,db,rar,sql.gz,sql.zip,sql.tar.gz,tar,tar.bz2,tar.gz,py,py~,cache
 }
 
